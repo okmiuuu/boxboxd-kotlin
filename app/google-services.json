@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1015429934030",
+    "project_id": "boxboxd-bb9a6",
+    "storage_bucket": "boxboxd-bb9a6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015429934030:android:2edbdc8965f2b77470599f",
+        "android_client_info": {
+          "package_name": "com.example.boxboxd"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1015429934030-ls62qnbi608b3euf7csioff164s5isjm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.boxboxd",
+            "certificate_hash": "6fe16a62d9a8579d859a30a1b435b2ca3f052b1a"
+          }
+        },
+        {
+          "client_id": "1015429934030-h3d0pphaj78ojku6gpdqnocm6sp0noqu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwJxjtDYAb3V720tye7LJjkRMt_1wZXHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1015429934030-h3d0pphaj78ojku6gpdqnocm6sp0noqu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
