@@ -30,6 +30,7 @@
     <string name="registration_return_to_main">return to the main page</string>
     <string name="error_message">error_message</string>
     <string name="this_season">this season</string>
+    <string name="last_season">last season</string>
     <string name="circuit_name">circuit name</string>
     <string name="last_winner">last winner -</string>
     <string name="log_as_watched">log as watched</string>
@@ -69,6 +70,10 @@
     <string name="race_added">race added</string>
     <string name="confirm">confirm</string>
     <string name="on_duplicate_dialog">race was already added to this list</string>
+    <string name="select_fav_driver">select fav driver</string>
+    <string name="select_fav_team">select fav team</string>
+    <string name="select_fav_track">select fav track</string>
+    <string name="type_the_name">type the name</string>
 
     <string name="default_web_client_id">34985048530-adfhifhuhfulkmc45gj.apps.googleusercontent.com</string>
 

@@ -1,31 +1,51 @@
 package com.example.boxboxd.core.jolpica
 
 import com.google.firebase.firestore.PropertyName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class RaceResponse(
     val MRData: MRData
 )
 
+@Serializable
 data class MRData(
-    val RaceTable : RaceTable,
-    val StatusTable : StatusTable
+    val xmlns: String,
+    val series: String,
+    val url: String,
+    val limit: String,
+    val offset: String,
+    val total: String,
+    val RaceTable: RaceTable?, // Required field
+    val StatusTable: StatusTable?, // Required field
+    val DriverTable: DriverTable? // Optional or not present
 )
 
+
+@Serializable
+data class DriverTable(
+    val Drivers: List<Driver>
+)
+
+@Serializable
 data class StatusTable (
     val Status : List<Status>,
 )
 
+@Serializable
 data class Status (
     val statusId : Int,
     val count : Int,
     val status : String,
 )
 
+@Serializable
 data class RaceTable(
     val season : Int,
     val Races: List<Race>
 )
 
+@Serializable
 data class Race (
     @PropertyName("season") val season: Int = 0,
     @PropertyName("round") val round: Int = 0,
@@ -43,12 +63,13 @@ data class Race (
     @PropertyName("Qualifying") val qualifying: Event? = null,
 )
 
-
+@Serializable
 data class Event (
     val date: String,
     val time : String,
 )
 
+@Serializable
 data class Result (
     val number : Int,
     val position : Int,
@@ -63,6 +84,7 @@ data class Result (
     val FastestLap : FastestLap,
 )
 
+@Serializable
 data class SprintResult (
     val number : Int,
     val position : Int,
@@ -77,6 +99,7 @@ data class SprintResult (
     val FastestLap : FastestLap,
 )
 
+@Serializable
 data class QualifyingResult (
     val number : Int,
     val position : Int,
@@ -87,7 +110,7 @@ data class QualifyingResult (
     val Q3 : String,
 )
 
-
+@Serializable
 data class Driver (
     val driverId : String,
     val permanentNumber : Int,
@@ -99,6 +122,7 @@ data class Driver (
     val nationality : String,
 )
 
+@Serializable
 data class Constructor (
     val constructorId : String,
     val url : String,
@@ -106,11 +130,13 @@ data class Constructor (
     val nationality : String,
 )
 
+@Serializable
 data class Time (
     val millis : Int,
     val time : String,
 )
 
+@Serializable
 data class Circuit(
     val circuitId : String = "",
     val url : String  = "",
@@ -118,6 +144,7 @@ data class Circuit(
     val Location: Location  = Location(),
 )
 
+@Serializable
 data class Location(
     val lat : Double = 0.0,
     val long : Double = 0.0,
@@ -125,6 +152,7 @@ data class Location(
     val country: String = "",
 )
 
+@Serializable
 data class FastestLap (
     val rank : Int,
     val lap : Int,
@@ -132,6 +160,7 @@ data class FastestLap (
     val AverageSpeed : AverageSpeed,
 )
 
+@Serializable
 data class AverageSpeed (
     val units : String,
     val speed : Double,

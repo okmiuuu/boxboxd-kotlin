@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.enums.StatTypes
+import com.example.boxboxd.core.inner.enums.Teams
 import com.example.boxboxd.core.inner.enums.TyresGrades
 
 object MapObjects {
@@ -40,5 +41,9 @@ object MapObjects {
 
     )
 
-
+    val teamToPicture = mapOf(
+        Teams.FERRARI to R.drawable.ferrari,
+        Teams.MCLAREN to R.drawable.mclaren,
+        Teams.REDBULL to R.drawable.redbull,
+    )
 }

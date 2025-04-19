@@ -2,6 +2,7 @@ package com.example.boxboxd.view.widgets
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +36,7 @@ fun FavoritesTable(
     val team = user.favTeam
     val circuit = user.favCircuit
 
-    var driverCode = ""
+    var driverCode = "-"
     var drawableResId = R.drawable.heart
 
     if (driver != null) {
@@ -59,11 +60,15 @@ fun FavoritesTable(
                 text = stringResource(R.string.fav_driver)
             )
 
-            Text(
-                text = driverCode,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.height(30.dp),
-            )
+            Box(
+
+            ) { //clickable box to change favorite
+                Text(
+                    text = driverCode,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.height(30.dp),
+                )
+            }
         }
         Row {
             //favorite team row

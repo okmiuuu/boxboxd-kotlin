@@ -14,12 +14,19 @@ import com.example.boxboxd.core.jolpica.Circuit
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.core.jolpica.Race
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.WriteBatch
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -41,7 +48,27 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
     private val _isLoadingThisSeason = MutableStateFlow(false)
     val isLoadingThisSeason: StateFlow<Boolean> = _isLoadingThisSeason.asStateFlow()
 
-    fun fetchRacesForSeason(seasonYear: Int) {
+    private val _racesLastSeason = MutableStateFlow<List<Race>>(emptyList())
+    val racesLastSeason: StateFlow<List<Race>> = _racesLastSeason.asStateFlow()
+
+    private val _isLoadingLastSeason = MutableStateFlow(false)
+    val isLoadingLastSeason: StateFlow<Boolean> = _isLoadingLastSeason.asStateFlow()
+
+    fun fetchRacesForLastSeason(seasonYear: Int) {
+        viewModelScope.launch {
+            _isLoadingLastSeason.value = true
+            try {
+                val racesForSeason = repository.getRacesForSeason(seasonYear - 1)
+                _racesLastSeason.value = racesForSeason
+            } catch (e: Exception) {
+                _racesLastSeason.value = emptyList()
+            } finally {
+                _isLoadingLastSeason.value = false
+            }
+        }
+    }
+
+    fun fetchRacesForThisSeason(seasonYear: Int) {
         viewModelScope.launch {
             _isLoadingThisSeason.value = true
             try {
@@ -54,6 +81,104 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
             }
         }
     }
+
+    fun loadAndUploadDrivers() {
+        viewModelScope.launch {
+            println("Starting driver upload process")
+            val allDrivers = mutableListOf<Driver>()
+
+            // Collect drivers for each season concurrently
+            val deferredDrivers = (1950..2025).map { seasonYear ->
+                async(Dispatchers.IO) {
+                    try {
+                        val driversForSeason = repository.getDriversForSeason(seasonYear)
+                        println("Loaded ${driversForSeason.size} drivers for season $seasonYear")
+                        driversForSeason
+                    } catch (e: Exception) {
+                        println("Error loading drivers for season $seasonYear: ${e.message}")
+                        emptyList<Driver>() // Return empty list for failed season
+                    }
+                }
+            }
+
+            val seasonDrivers = deferredDrivers.awaitAll()
+            allDrivers.addAll(seasonDrivers.flatten())
+            println("Total drivers loaded: ${allDrivers.size}")
+
+            val uniqueDrivers = deduplicateDrivers(allDrivers)
+            println("Found ${uniqueDrivers.size} unique drivers")
+
+            uploadDriversToFirestore(db, uniqueDrivers).fold(
+                onSuccess = { println("Upload completed successfully") },
+                onFailure = { e -> println("Upload failed: ${e.message}") }
+            )
+        }
+    }
+
+    private fun deduplicateDrivers(drivers: List<Driver>): List<Driver> {
+        val uniqueDrivers = drivers.distinctBy { it.driverId }
+        println("Deduplicated ${drivers.size} drivers to ${uniqueDrivers.size} unique drivers")
+        return uniqueDrivers
+    }
+
+
+
+    suspend fun uploadDriversToFirestore(db: FirebaseFirestore, drivers: List<Driver>): Result<Unit> {
+        return try {
+            println("Attempting to upload ${drivers.size} drivers")
+            val collectionRef = db.collection("drivers")
+
+            val batch: WriteBatch = db.batch()
+            drivers.forEach { driver ->
+                val docRef = collectionRef.document(driver.driverId)
+                println("Writing driver ${driver.driverId}: $driver")
+                batch.set(docRef, driver)
+            }
+
+            batch.commit().await()
+            println("Successfully uploaded ${drivers.size} drivers to Firestore")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("Error uploading drivers to Firestore: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getListOfDriverNames(): List<String> = withContext(Dispatchers.IO) {
+        try {
+            val query = db.collection("drivers")
+            val snapshot = query.get().await()
+
+            if (snapshot.isEmpty) {
+                println("Drivers collection is empty")
+                return@withContext emptyList()
+            }
+
+            val driverNames = snapshot.documents.mapNotNull { document ->
+                try {
+                    val givenName = document.getString("givenName")
+                    val familyName = document.getString("familyName")
+                    if (givenName != null && familyName != null) {
+                        "$givenName $familyName"
+                    } else {
+                        println("Missing givenName or familyName for document ${document.id}")
+                        null
+                    }
+                } catch (e: Exception) {
+                    println("Error processing document ${document.id}: ${e.message}")
+                    null
+                }
+            }
+
+            println("Retrieved ${driverNames.size} driver names: $driverNames")
+            driverNames
+        } catch (e: Exception) {
+            println("Error querying drivers collection: ${e.message}")
+            emptyList()
+        }
+    }
+
+
 
     fun isEntryLikedByCurrentUser(entry: Entry, currentUser: User): Boolean {
         val userId = currentUser.id ?: return false // No user ID, can't be liked
@@ -115,16 +240,30 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
     }
 
     suspend fun getLastWinner(race: Race) : Driver? {
-        val lastRace : Race?
-        if (checkIfTheRaceHasPassed(race)) {
-            lastRace = repository.getRaceForSeasonAndCircuit(LocalDate.now().year, race.Circuit ?: Circuit())
+        Log.i("GET LAST WINNER", "season: ${race.season} + round${race.round}")
+
+        Log.i("GET LAST WINNER CHECK", checkIfTheRaceHasPassed(race).toString())
+
+        var lastRace = if (checkIfTheRaceHasPassed(race)) {
+            Log.i("aaa", "aaa")
+            repository.getRaceForSeasonAndCircuit(LocalDate.now().year, race.Circuit ?: Circuit())
         } else {
-            lastRace = repository.getRaceForSeasonAndCircuit(LocalDate.now().year - 1, race.Circuit ?: Circuit())
+            Log.i("bbb", "bbb")
+            repository.getRaceForSeasonAndCircuit(LocalDate.now().year - 1, race.Circuit ?: Circuit())
         }
+
+        Log.i("GET LAST WINNER", "season: ${lastRace?.season} + round${lastRace?.round}")
 
         if (lastRace != null) {
             return getDriverAtPositionForRace(1, lastRace)
         }
+
+        lastRace = repository.getRaceForSeasonAndCircuit(LocalDate.now().year - 1, race.Circuit ?: Circuit())
+
+        if (lastRace != null) {
+            return getDriverAtPositionForRace(1, lastRace)
+        }
+
         return null
     }
 

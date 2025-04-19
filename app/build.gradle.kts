@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -87,4 +88,6 @@ dependencies {
     implementation(libs.coil.compose.v222)
     implementation(libs.accompanist.permissions)
     implementation(libs.coil.compose.v270)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
 }

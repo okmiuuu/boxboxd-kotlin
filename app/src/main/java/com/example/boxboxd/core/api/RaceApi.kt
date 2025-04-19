@@ -18,4 +18,9 @@ interface RaceApi {
         @Path("season") season: Int,
         @Path("circuitId") circuitId: String
     ): RaceResponse
+
+    @GET("{season}/drivers.json")
+    suspend fun fetchDriversForSeason(
+        @Path("season") season: Int,
+    ): RaceResponse
 }

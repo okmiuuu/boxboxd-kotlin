@@ -118,6 +118,7 @@ fun ListCard(
 
             if (isMainVersion && isExpanded) {
                 RacesRow(
+                    isLoading = false,
                     raceItems = customList.listItems ?: emptyList(),
                     title = null,
                     racesViewModel = racesViewModel,

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.example.boxboxd.core.inner.RaceRepository
@@ -23,12 +24,16 @@ class MainActivity : ComponentActivity() {
         val racesViewModel = ViewModelProvider(this, RacesViewModelFactory(repository))
             .get(RacesViewModel::class.java)
 
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             BoxboxdTheme (
                 dynamicColor = false
             ) {
+                //load all drivers to firebase. called one time
+                //racesViewModel.loadAndUploadDrivers()
+
                 val navController = rememberNavController()
 
                 val accountViewModel = ViewModelProvider(this, AccountViewModelFactory(navController))

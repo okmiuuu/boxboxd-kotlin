@@ -5,4 +5,5 @@ object Collections {
     const val LOGGED_RACES = "loggedRaces"
     const val CUSTOM_LISTS = "customLists"
     const val ENTRIES = "entries"
+    const val DRIVERS = "drivers"
 }

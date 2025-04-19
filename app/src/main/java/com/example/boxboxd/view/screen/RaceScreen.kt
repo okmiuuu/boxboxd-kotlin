@@ -123,7 +123,7 @@ fun RaceScreen (
 
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
             ) {
 
                 if (isRaceHasPassed) {
