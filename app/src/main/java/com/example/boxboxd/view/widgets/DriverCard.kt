@@ -1,15 +1,31 @@
-package com.example.boxboxd.view.widgets
+package com.example.boxboxd.ui
 
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.model.WikiResponse
+import com.example.boxboxd.viewmodel.RacesViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -19,20 +35,86 @@ import java.io.IOException
 
 @Composable
 fun DriverCard(
-    driver : Driver
+    driver: Driver,
+    modifier: Modifier = Modifier
 ) {
-    val picture = remember { mutableStateOf<String?>("") }
+    var picture by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
-        picture.value = getFirstImageFromWiki(wikiUrl = driver.url)
+    LaunchedEffect(driver.driverId) {
+        isLoading = true
+        errorMessage = null
+        picture = getFirstImageFromWiki(driver.url)
+        isLoading = false
+        if (picture == null) {
+            errorMessage = "No image found for ${driver.givenName} ${driver.familyName}"
+        }
     }
 
-    AsyncImage(
-        model = picture,
-        contentDescription = "${driver.givenName} ${driver.familyName}",
-        modifier = Modifier,
-        contentScale = ContentScale.Fit
-    )
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .border(1.dp, Color.Gray)
+    ) {
+        when {
+            isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            }
+            errorMessage != null -> {
+                Text(
+                    text = errorMessage ?: "Unknown error",
+                    color = Color.Red,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+            picture != null -> {
+                AsyncImage(
+                    model = picture,
+                    contentDescription = "${driver.givenName} ${driver.familyName}",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .width(150.dp)
+                        .height(200.dp) ,
+                    onState = { state ->
+                        when (state) {
+                            is AsyncImagePainter.State.Loading -> println("Loading image for ${driver.driverId}")
+                            is AsyncImagePainter.State.Success -> println("Image loaded for ${driver.driverId}")
+                            is AsyncImagePainter.State.Error -> {
+                                println("Error loading image for ${driver.driverId}: ${state.result.throwable.message}")
+                                errorMessage = "Failed to load image"
+                            }
+                            is AsyncImagePainter.State.Empty -> println("Empty image state for ${driver.driverId}")
+                        }
+                    }
+                )
+            }
+            else -> {
+                Text(
+                    text = "No image available",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
+        Column (
+            modifier = Modifier
+                .padding(20.dp)
+        ) {
+            Text(
+                text = "${driver.givenName} ${driver.familyName}",
+                modifier = Modifier.padding(bottom = 8.dp),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Text(
+                text = "code - ${driver.code}",
+                modifier = Modifier.padding(bottom = 8.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
 }
 
 

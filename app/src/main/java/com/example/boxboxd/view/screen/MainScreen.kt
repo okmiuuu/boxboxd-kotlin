@@ -19,7 +19,7 @@ import androidx.navigation.NavHostController
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.collectAsStateDelegate
 import com.example.boxboxd.core.jolpica.Driver
-import com.example.boxboxd.view.widgets.DriverCard
+import com.example.boxboxd.ui.DriverCard
 import com.example.boxboxd.view.widgets.RacesRow
 import com.example.boxboxd.viewmodel.AccountViewModel
 import com.example.boxboxd.viewmodel.RacesViewModel
@@ -52,21 +52,6 @@ fun MainScreen (
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item {
-            val driver = Driver(
-                code = "VER",
-                url = "http://en.wikipedia.org/wiki/Max_Verstappen",
-                dateOfBirth = "1997-09-30",
-                driverId = "max_verstappen",
-                familyName = "Verstappen",
-                givenName = "Max",
-                nationality = "Dutch",
-                permanentNumber = 33
-            )
-
-            DriverCard(driver)
-        }
-
 
         item {
             RacesRow(
