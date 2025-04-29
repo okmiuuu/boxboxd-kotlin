@@ -110,15 +110,7 @@ fun LogRaceMenu(
 @Composable
 fun GradeSelector(selectedTyre: MutableState<TyresGrades?>) {
 
-    val tyreToReaction = mapOf(
-        TyresGrades.WET to stringResource(R.string.kinda_awful),
-        TyresGrades.INTER to stringResource(R.string.ngl_bad),
-        TyresGrades.HARD to stringResource(R.string.okay_ig),
-        TyresGrades.MEDIUM to stringResource(R.string.pretty_good),
-        TyresGrades.SOFT to stringResource(R.string.awesome_thing),
-    )
-
-    val reaction = remember { mutableStateOf<String?>(null) }
+    val reaction = remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -134,7 +126,7 @@ fun GradeSelector(selectedTyre: MutableState<TyresGrades?>) {
                     typeType = tyreGrade,
                     isSelected = selectedTyre.value == tyreGrade,
                     onClick = {
-                        reaction.value = tyreToReaction[tyreGrade]
+                        reaction.value = MapObjects.tyreToReaction[tyreGrade]
                         selectedTyre.value = tyreGrade
                     }
                 )
@@ -145,7 +137,7 @@ fun GradeSelector(selectedTyre: MutableState<TyresGrades?>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
-                text = reaction.value.toString(),
+                text = stringResource(reaction.value ?: R.string.no),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )

@@ -74,6 +74,15 @@
     <string name="select_fav_team">select fav team</string>
     <string name="select_fav_track">select fav track</string>
     <string name="type_the_name">type the name</string>
+    <string name="select">select</string>
+    <string name="exciting">exciting</string>
+    <string name="boring">boring</string>
+    <string name="chaotic">chaotic</string>
+    <string name="frustrating">frustrating</string>
+    <string name="satisfying">satisfying</string>
+    <string name="emotional">emotional</string>
+    <string name="controversial">controversial</string>
+    <string name="predictable">predictable</string>
 
     <string name="default_web_client_id">34985048530-adfhifhuhfulkmc45gj.apps.googleusercontent.com</string>
 

@@ -1,6 +1,8 @@
 package com.example.boxboxd.view.widgets
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -21,89 +25,130 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.User
-import com.example.boxboxd.core.inner.enums.FavTypes
+import com.example.boxboxd.core.inner.enums.Teams
+import com.example.boxboxd.core.inner.objects.MapObjects
 import com.example.boxboxd.core.jolpica.Circuit
-import com.example.boxboxd.core.jolpica.Constructor
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.viewmodel.RacesViewModel
 
 @Composable
 fun FavoritesTable(
-    user: User,
-    racesViewModel : RacesViewModel
+    driver : Driver?,
+    circuit : Circuit?,
+    team : Teams?,
+    racesViewModel : RacesViewModel,
+    areRowsClickable : Boolean,
+    onDriverSelect : () -> Unit,
+    onTeamSelect : () -> Unit,
+    onTrackSelect : () -> Unit
 ) {
-    val driver = user.favDriver
-    val team = user.favTeam
-    val circuit = user.favCircuit
-
-    var driverCode = "-"
-    var drawableResId = R.drawable.heart
-
-    if (driver != null) {
-        driverCode = driver.code
-    }
 
     val context = LocalContext.current
 
-    if (circuit != null) {
-        drawableResId = racesViewModel.getDrawableResourceId(context, circuit.circuitId)
+    var driverCode = "-"
+    var drawableTeamId = R.drawable.hungaroring
+    var drawableTrackId = R.drawable.hungaroring
+
+    if (driver != null) {
+        driverCode = driver.code ?: "-"
     }
+
+    if (team != null) {
+        drawableTeamId = MapObjects.teamToPicture[team] ?: R.drawable.hungaroring
+    }
+
+    if (circuit != null) {
+        drawableTrackId = racesViewModel.getDrawableResourceId(context, circuit.circuitId)
+    }
+
+
 
     Column(
         modifier = Modifier
             .fillMaxSize(),
         verticalArrangement = Arrangement.Center
     ) {
-        Row {
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(40.dp),
+        ) {
             // favorite driver row
             TextFavorites(
                 text = stringResource(R.string.fav_driver)
             )
 
             Box(
-
+                modifier = Modifier
+                    .clickable {
+                        if (areRowsClickable) {
+                            onDriverSelect()
+                        }
+                    }
             ) { //clickable box to change favorite
                 Text(
                     text = driverCode,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.height(30.dp),
                 )
             }
         }
-        Row {
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(40.dp),
+        ) {
             //favorite team row
             TextFavorites(
                 text = stringResource(R.string.fav_team)
             )
-            Image(
-                painter = painterResource(id = drawableResId),
-                contentDescription = "Circuit image for fav track",
+            Box(
                 modifier = Modifier
-                    .height(40.dp)
-                    .padding(5.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
-            )
+                    .clickable {
+                        if (areRowsClickable) {
+                            onTeamSelect()
+                        }
+                    }
+            ) { //clickable box to change favorite
+                Image(
+                    painter = painterResource(id = drawableTeamId),
+                    contentDescription = "Logo for fav constructor",
+                    modifier = Modifier
+                        .height(40.dp)
+                        .padding(5.dp),
+                    contentScale = ContentScale.Fit,
+                )
+            }
+
         }
 
-        Row {
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(40.dp),
+        ) {
             //favorite track row
             TextFavorites(
                 text = stringResource(R.string.fav_track)
             )
 
-            Image(
-                painter = painterResource(id = drawableResId),
-                contentDescription = "Circuit image for fav track",
+            Box(
                 modifier = Modifier
-                    .height(40.dp)
-                    .padding(5.dp),
-                contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
-            )
+                    .clickable {
+                        if (areRowsClickable) {
+                            onTrackSelect()
+                        }
+                    }
+            ) { //clickable box to change favorite
+                Image(
+                    painter = painterResource(id = drawableTrackId),
+                    contentDescription = "Circuit image for fav track",
+                    modifier = Modifier
+                        .height(40.dp)
+                        .padding(5.dp),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
+                )
+            }
         }
-
     }
+
 }
 
 @Composable
@@ -114,7 +159,6 @@ fun TextFavorites(
         text = text,
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
-            .height(40.dp)
             .fillMaxWidth(0.7f)
     )
 }

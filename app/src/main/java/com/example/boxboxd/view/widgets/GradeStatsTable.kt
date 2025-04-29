@@ -100,33 +100,3 @@ fun StatRectangle (grade : Int, countForGrade : Int, fullEntryCount : Int) {
         )
     }
 }
-
-@Composable
-fun TyreComponent(
-    typeType: TyresGrades,
-) {
-    val tyreToPicture = mapOf(
-        TyresGrades.WET to R.drawable.tyre_wet,
-        TyresGrades.INTER to R.drawable.tyre_inter,
-        TyresGrades.HARD to R.drawable.tyre_hard,
-        TyresGrades.MEDIUM to R.drawable.tyre_medium,
-        TyresGrades.SOFT to R.drawable.tyre_soft,
-    )
-
-    val tyreImage = tyreToPicture[typeType]
-
-    Box(
-        modifier = Modifier
-            .height(60.dp)
-            .width(60.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        tyreImage?.let {
-            Image(
-                painter = painterResource(id = it),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(1f)
-            )
-        }
-    }
-}

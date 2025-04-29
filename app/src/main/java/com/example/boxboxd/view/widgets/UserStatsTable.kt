@@ -1,8 +1,6 @@
 package com.example.boxboxd.view.widgets
 
 import android.util.Log
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,16 +22,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.User
 import com.example.boxboxd.core.inner.enums.StatTypes
+import com.example.boxboxd.core.inner.enums.Teams
 import com.example.boxboxd.core.inner.objects.MapObjects
+import com.example.boxboxd.core.jolpica.Circuit
+import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.viewmodel.AccountViewModel
 
 @Composable
@@ -60,6 +56,7 @@ fun UserStatsTable(
                 count = accountViewModel.getUserStat(StatTypes.ENTRIES, user),
                 onClick = {
                     Log.i("userRow1", "click")
+                    accountViewModel.navigateToEntriesScreen()
                 },
             )
 

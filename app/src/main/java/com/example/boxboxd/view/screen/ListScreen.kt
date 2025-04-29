@@ -20,7 +20,4 @@ fun ListScreen(
         onDismiss = {
         }
     )
-
-
-
 }

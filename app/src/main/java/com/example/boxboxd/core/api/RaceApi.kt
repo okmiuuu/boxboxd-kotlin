@@ -3,6 +3,7 @@ package com.example.boxboxd.core.api
 import com.example.boxboxd.core.jolpica.RaceResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface RaceApi {
     @GET("races.json")
@@ -23,4 +24,7 @@ interface RaceApi {
     suspend fun fetchDriversForSeason(
         @Path("season") season: Int,
     ): RaceResponse
+
+    @GET("circuits.json")
+    suspend fun fetchAllCircuits(@Query("offset") offset: Int = 0): RaceResponse
 }

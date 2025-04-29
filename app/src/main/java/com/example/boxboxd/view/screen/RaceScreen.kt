@@ -37,6 +37,7 @@ import com.example.boxboxd.core.jolpica.Race
 import com.example.boxboxd.core.inner.objects.CircuitContinentMap
 import com.example.boxboxd.core.inner.objects.RegionColorMap
 import com.example.boxboxd.view.widgets.AddButton
+import com.example.boxboxd.view.widgets.BoxForOverlayMenu
 import com.example.boxboxd.view.widgets.ChooseListMenu
 import com.example.boxboxd.view.widgets.LogRaceMenu
 import com.example.boxboxd.view.widgets.MainButton
@@ -230,16 +231,8 @@ fun RaceScreen (
         }
 
         if (isLogRaceMenuOpened.value) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        onClick = { showConfirmDialog.value = true },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-            )
+
+            BoxForOverlayMenu { showConfirmDialog.value = true  }
 
             Column(
                 modifier = Modifier

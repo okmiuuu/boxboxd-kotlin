@@ -31,6 +31,14 @@ fun createTypography(isDarkTheme: Boolean): Typography {
             lineHeight = 24.sp,
             letterSpacing = 0.5.sp
         ),
+        bodyLarge = TextStyle(
+            fontFamily = Formula1FontFamily,
+            fontWeight = FontWeight.Normal,
+            color = textColor(isDarkTheme),
+            fontSize = 20.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.5.sp
+        ),
         titleSmall = TextStyle(
             fontFamily = Formula1FontFamily,
             fontWeight = FontWeight.Bold,

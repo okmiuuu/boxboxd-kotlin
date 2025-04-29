@@ -36,7 +36,7 @@ import java.io.IOException
 @Composable
 fun DriverCard(
     driver: Driver,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var picture by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -56,7 +56,6 @@ fun DriverCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .border(1.dp, Color.Gray)
     ) {
         when {
             isLoading -> {

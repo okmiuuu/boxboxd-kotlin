@@ -19,6 +19,7 @@ import com.example.boxboxd.core.jolpica.Race
 import com.example.boxboxd.view.screen.ListScreen
 import com.example.boxboxd.view.screen.MainScreen
 import com.example.boxboxd.view.screen.RaceScreen
+import com.example.boxboxd.view.screen.UserEntriesScreen
 import com.example.boxboxd.view.screen.UserScreen
 import com.example.boxboxd.viewmodel.AccountViewModel
 import com.example.boxboxd.viewmodel.RacesViewModel
@@ -49,6 +50,28 @@ fun AppNavigation(
                 ) {
                     MainScreen(
                         navController = navController,
+                        racesViewModel = racesViewModel,
+                        accountViewModel = accountViewModel
+                    )
+                }
+            }
+        }
+
+        composable(Routes.ENTRIES_SCREEN) {
+            Scaffold(
+                topBar = {
+                    TopBar(
+                        accountViewModel = accountViewModel
+                    )
+                }
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    UserEntriesScreen(
                         racesViewModel = racesViewModel,
                         accountViewModel = accountViewModel
                     )

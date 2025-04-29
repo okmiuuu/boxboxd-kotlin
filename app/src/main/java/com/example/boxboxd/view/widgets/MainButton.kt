@@ -15,12 +15,14 @@ import androidx.compose.ui.unit.dp
 fun MainButton(
     buttonText : String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(0.7f)
+    modifier: Modifier = Modifier.fillMaxWidth(0.7f),
+    enabled : Boolean = true,
 ) {
     Button(
         modifier = modifier,
         onClick = onClick,
-        shape = RoundedCornerShape(5.dp)
+        shape = RoundedCornerShape(5.dp),
+        enabled = enabled
     ) {
         Text(
             text = buttonText,

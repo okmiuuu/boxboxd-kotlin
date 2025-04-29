@@ -4,15 +4,18 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.yml.charts.common.extensions.isNotNull
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.Entry
 import com.example.boxboxd.core.inner.RaceRepository
 import com.example.boxboxd.core.inner.User
 import com.example.boxboxd.core.inner.objects.Collections
 import com.example.boxboxd.core.inner.objects.Fields
+import com.example.boxboxd.core.inner.objects.MapObjects
 import com.example.boxboxd.core.jolpica.Circuit
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.core.jolpica.Race
+import com.example.boxboxd.model.DropdownItem
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.WriteBatch
@@ -121,16 +124,14 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         return uniqueDrivers
     }
 
-
-
     suspend fun uploadDriversToFirestore(db: FirebaseFirestore, drivers: List<Driver>): Result<Unit> {
         return try {
             println("Attempting to upload ${drivers.size} drivers")
-            val collectionRef = db.collection("drivers")
+            val collectionRef = db.collection(Collections.DRIVERS)
 
             val batch: WriteBatch = db.batch()
             drivers.forEach { driver ->
-                val docRef = collectionRef.document(driver.driverId)
+                val docRef = collectionRef.document(driver.driverId ?: "")
                 println("Writing driver ${driver.driverId}: $driver")
                 batch.set(docRef, driver)
             }
@@ -178,7 +179,57 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         }
     }
 
+    suspend fun getCircuitsFromRepository() : List<Circuit?> {
+        return repository.getAllCircuits()
+    }
 
+    fun addPicturesToCircuitsList(context: Context, circuitsList : List<Circuit?>) : List<DropdownItem> {
+
+        val resultList: MutableList<DropdownItem> = mutableListOf()
+
+        circuitsList.forEach { circuit ->
+            val drawableId = getDrawableResourceId(
+                context,
+                circuit?.circuitId
+            )
+
+            resultList.add(DropdownItem(circuit?.circuitName ?: "", drawableId))
+        }
+
+        return resultList
+
+    }
+
+    suspend fun getCircuitsWithPicturesList(context: Context): List<DropdownItem> = withContext(Dispatchers.IO) {
+        val circuitsList = getCircuitsFromRepository()
+        addPicturesToCircuitsList(context, circuitsList)
+    }
+
+
+    fun getListOfTeamItems(): List<DropdownItem> {
+
+        val resultList: MutableList<DropdownItem> = mutableListOf()
+
+        val teams : List<String> = listOf(
+            "Oracle Red Bull Racing",
+            "McLaren Formula 1 Team",
+            "Scuderia Ferrari HP",
+            "Mercedes AMG Petronas F1 Team",
+            "Aston Martin Aramco F1 Team",
+            "BWT Alpine F1 Team",
+            "Atlassian Williams Racing",
+            "MoneyGram Haas F1 Team",
+            "Stake F1 Team Kick Sauber",
+            "Visa Cash App Racing Bulls F1 Team")
+
+        teams.forEach { teamName ->
+            val team = MapObjects.stringNameToTeam[teamName.lowercase()]
+            val picture = MapObjects.teamToPicture[team]
+
+            resultList.add(DropdownItem(teamName, picture))
+        }
+        return resultList
+    }
 
     fun isEntryLikedByCurrentUser(entry: Entry, currentUser: User): Boolean {
         val userId = currentUser.id ?: return false // No user ID, can't be liked
@@ -196,10 +247,10 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         return isLiked
     }
 
-    fun getDrawableResourceId(context: Context, drawableName: String): Int {
-        val resource = context.resources.getIdentifier(drawableName.lowercase(), "drawable", context.packageName)
+    fun getDrawableResourceId(context: Context, drawableName: String?): Int {
+        val resource = context.resources.getIdentifier(drawableName?.lowercase(), "drawable", context.packageName)
         return if (resource == 0) {
-            R.drawable.americas
+            R.drawable.placeholder
         } else resource
     }
 
@@ -240,19 +291,11 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
     }
 
     suspend fun getLastWinner(race: Race) : Driver? {
-        Log.i("GET LAST WINNER", "season: ${race.season} + round${race.round}")
-
-        Log.i("GET LAST WINNER CHECK", checkIfTheRaceHasPassed(race).toString())
-
         var lastRace = if (checkIfTheRaceHasPassed(race)) {
-            Log.i("aaa", "aaa")
             repository.getRaceForSeasonAndCircuit(LocalDate.now().year, race.Circuit ?: Circuit())
         } else {
-            Log.i("bbb", "bbb")
             repository.getRaceForSeasonAndCircuit(LocalDate.now().year - 1, race.Circuit ?: Circuit())
         }
-
-        Log.i("GET LAST WINNER", "season: ${lastRace?.season} + round${lastRace?.round}")
 
         if (lastRace != null) {
             return getDriverAtPositionForRace(1, lastRace)
@@ -318,6 +361,138 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         }
 
         return resultTable
+    }
+
+
+    suspend fun getListOfDrivers(): List<Driver> = withContext(Dispatchers.IO) {
+        try {
+            val query = db.collection("drivers")
+            val snapshot = query.get().await()
+
+            if (snapshot.isEmpty) {
+                println("Drivers collection is empty")
+                return@withContext emptyList()
+            }
+
+            val driverNames = snapshot.documents.mapNotNull { document ->
+                try {
+                    val code = document.getString(Fields.CODE)
+                    val dateOfBirth = document.getString(Fields.DATE_OF_BIRTH)
+                    val driverId = document.getString(Fields.DRIVER_ID)
+                    val familyName = document.getString(Fields.FAMILY_NAME)
+                    val givenName = document.getString(Fields.GIVEN_NAME)
+                    val nationality = document.getString(Fields.NATIONALITY)
+                    val permanentNumber = document.getLong(Fields.PERMANENT_NUMBER)?.toInt()
+                    val url = document.getString(Fields.URL)
+
+                    if (!givenName.isNullOrEmpty() &&
+                        !familyName.isNullOrEmpty() &&
+                        !driverId.isNullOrEmpty() &&
+                        !nationality.isNullOrEmpty() &&
+                        permanentNumber != null &&
+                        !url.isNullOrEmpty() &&
+                        !code.isNullOrEmpty() &&
+                        !dateOfBirth.isNullOrEmpty()) {
+
+                        Driver(
+                            code = code,
+                            dateOfBirth = dateOfBirth,
+                            driverId = driverId,
+                            familyName = familyName,
+                            givenName = givenName,
+                            nationality = nationality,
+                            permanentNumber = permanentNumber,
+                            url = url
+                        )
+                    } else {
+                        println("Missing givenName or familyName for document ${document.id}")
+                        null
+                    }
+                } catch (e: Exception) {
+                    println("Error processing document ${document.id}: ${e.message}")
+                    null
+                }
+            }
+
+            println("Retrieved ${driverNames.size} driver names: $driverNames")
+            driverNames
+        } catch (e: Exception) {
+            println("Error querying drivers collection: ${e.message}")
+            emptyList()
+        }
+    }
+
+
+    suspend fun getDriverObjectFromName(fullName: String): Driver? = withContext(Dispatchers.IO) {
+        // Return null if fullName is empty or doesn't contain a space
+        if (fullName.isBlank() || !fullName.contains(" ")) {
+            println("Invalid fullName: $fullName")
+            return@withContext null
+        }
+
+        try {
+            // Split fullName into givenName and familyName
+            val indexOfSpace = fullName.indexOf(" ")
+            val givenName = fullName.substring(0, indexOfSpace).trim()
+            val familyName = fullName.substring(indexOfSpace + 1).trim()
+
+            // Query Firestore for a driver with matching givenName and familyName
+            val query = db.collection("drivers")
+                .whereEqualTo(Fields.GIVEN_NAME, givenName)
+                .whereEqualTo(Fields.FAMILY_NAME, familyName)
+                .limit(1) // We only need one match
+
+            val snapshot = query.get().await()
+
+            if (snapshot.isEmpty) {
+                println("No driver found for givenName: $givenName, familyName: $familyName")
+                return@withContext null
+            }
+
+            // Get the first matching document
+            val document = snapshot.documents.firstOrNull()
+            if (document == null) {
+                println("No driver document found for givenName: $givenName, familyName: $familyName")
+                return@withContext null
+            }
+
+            // Extract fields and create Driver object
+            val code = document.getString(Fields.CODE)
+            val dateOfBirth = document.getString(Fields.DATE_OF_BIRTH)
+            val driverId = document.getString(Fields.DRIVER_ID)
+            val nationality = document.getString(Fields.NATIONALITY)
+            val permanentNumber = document.getLong(Fields.PERMANENT_NUMBER)?.toInt()
+            val url = document.getString(Fields.URL)
+
+            if (!givenName.isNullOrEmpty() &&
+                !familyName.isNullOrEmpty() &&
+                !driverId.isNullOrEmpty() &&
+                !nationality.isNullOrEmpty() &&
+                permanentNumber != null &&
+                !url.isNullOrEmpty() &&
+                !code.isNullOrEmpty() &&
+                !dateOfBirth.isNullOrEmpty()
+            ) {
+                val driver = Driver(
+                    code = code,
+                    dateOfBirth = dateOfBirth,
+                    driverId = driverId,
+                    familyName = familyName,
+                    givenName = givenName,
+                    nationality = nationality,
+                    permanentNumber = permanentNumber,
+                    url = url
+                )
+                println("Found driver: $driver")
+                driver
+            } else {
+                println("Missing or invalid data for document ${document.id}")
+                null
+            }
+        } catch (e: Exception) {
+            println("Error in getDriverObjectFromName: ${e.message}")
+            null
+        }
     }
 
 }

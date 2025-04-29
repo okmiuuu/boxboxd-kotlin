@@ -14,6 +14,7 @@ import com.example.boxboxd.core.inner.CustomList
 import com.example.boxboxd.core.inner.Entry
 import com.example.boxboxd.core.inner.User
 import com.example.boxboxd.core.inner.enums.StatTypes
+import com.example.boxboxd.core.inner.enums.Teams
 import com.example.boxboxd.core.inner.objects.Collections
 import com.example.boxboxd.core.inner.objects.Fields
 import com.example.boxboxd.core.inner.objects.Routes
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.net.URLEncoder
 
@@ -58,8 +60,8 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
     private val _userFavDriver = MutableStateFlow<Driver?>(null)
     val userFavDriver: StateFlow<Driver?> get() = _userFavDriver
 
-    private val _userFavTeam = MutableStateFlow<Constructor?>(null)
-    val userFavTeam: StateFlow<Constructor?> get() = _userFavTeam
+    private val _userFavTeam = MutableStateFlow<Teams?>(null)
+    val userFavTeam: StateFlow<Teams?> get() = _userFavTeam
 
     private val _userFavCircuit = MutableStateFlow<Circuit?>(null)
     val userFavCircuit: StateFlow<Circuit?> get() = _userFavCircuit
@@ -88,6 +90,10 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
         val raceJson = Gson().toJson(race)
         val encodedRaceJson = URLEncoder.encode(raceJson, "UTF-8")
         navController.navigate("${Routes.RACE_SCREEN}/$encodedRaceJson")
+    }
+
+    fun navigateToEntriesScreen() {
+        navController.navigate(Routes.ENTRIES_SCREEN)
     }
 
     fun navigateToListsScreen() {
@@ -555,5 +561,80 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
             .addOnFailureListener { e ->
                 Log.e("AccountViewModel", "Failed to read entry: ${e.message}")
             }
+    }
+
+    suspend fun setFavoriteDriver(driver: Driver): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val user = currentUser
+            if (user == null) {
+                println("No authenticated user found")
+                return@withContext false
+            }
+
+            val userDocRef = db.collection(Collections.USERS).document(user.uid)
+
+            val driverData = mapOf(
+                Fields.CODE to driver.code,
+                Fields.DATE_OF_BIRTH to driver.dateOfBirth,
+                Fields.DRIVER_ID to driver.driverId,
+                Fields.FAMILY_NAME to driver.familyName,
+                Fields.GIVEN_NAME to driver.givenName,
+                Fields.NATIONALITY to driver.nationality,
+                Fields.PERMANENT_NUMBER to driver.permanentNumber,
+                Fields.URL to driver.url
+            )
+
+            userDocRef.update(Fields.FAV_DRIVER, driverData).await()
+
+            println("Successfully set favorite driver for user ${user.uid}: $driver")
+            true
+        } catch (e: Exception) {
+            println("Error setting favorite driver: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun setFavoriteTeam(team : Teams) : Boolean = withContext(Dispatchers.IO) {
+        try {
+            val user = currentUser
+            if (user == null) {
+                println("No authenticated user found")
+                return@withContext false
+            }
+
+            val userDocRef = db.collection(Collections.USERS).document(user.uid)
+
+            userDocRef.update(Fields.FAV_TEAM, team).await()
+
+            true
+        } catch (e: Exception) {
+            println("Error setting favorite team: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun setFavoriteCircuit(circuit : Circuit): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val user = currentUser
+            if (user == null) {
+                println("No authenticated user found")
+                return@withContext false
+            }
+
+            val userDocRef = db.collection(Collections.USERS).document(user.uid)
+
+            val circuitData = mapOf(
+                Fields.CIRCUIT_ID to circuit.circuitId,
+                Fields.CIRCUIT_NAME to circuit.circuitName,
+                Fields.URL to circuit.url
+            )
+
+            userDocRef.update(Fields.FAV_TRACK, circuitData).await()
+
+            true
+        } catch (e: Exception) {
+            println("Error setting favorite driver: ${e.message}")
+            false
+        }
     }
 }

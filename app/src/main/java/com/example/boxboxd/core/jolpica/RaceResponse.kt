@@ -18,7 +18,13 @@ data class MRData(
     val total: String,
     val RaceTable: RaceTable?, // Required field
     val StatusTable: StatusTable?, // Required field
-    val DriverTable: DriverTable? // Optional or not present
+    val DriverTable: DriverTable?, // Optional or not present
+    val CircuitTable: CircuitTable? // Optional or not present
+)
+
+@Serializable
+data class CircuitTable(
+    val Circuits: List<Circuit>
 )
 
 
@@ -112,14 +118,14 @@ data class QualifyingResult (
 
 @Serializable
 data class Driver (
-    val driverId : String,
-    val permanentNumber : Int,
-    val code : String,
-    val url : String,
-    val givenName : String,
-    val familyName : String,
-    val dateOfBirth : String,
-    val nationality : String,
+    val driverId : String? = null,
+    val permanentNumber : Int? = null,
+    val code : String? = null,
+    val url : String? = null,
+    val givenName : String? = null,
+    val familyName : String? = null,
+    val dateOfBirth : String? = null,
+    val nationality : String? = null,
 )
 
 @Serializable

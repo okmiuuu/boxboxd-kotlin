@@ -6,4 +6,5 @@ object Collections {
     const val CUSTOM_LISTS = "customLists"
     const val ENTRIES = "entries"
     const val DRIVERS = "drivers"
+    const val CIRCUITS = "circuits"
 }

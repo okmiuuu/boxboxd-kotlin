@@ -1,6 +1,7 @@
 package com.example.boxboxd.core.inner
 
 import com.example.boxboxd.core.inner.enums.StatTypes
+import com.example.boxboxd.core.inner.enums.Teams
 import com.example.boxboxd.core.inner.enums.TyresGrades
 import com.example.boxboxd.core.jolpica.Circuit
 import com.example.boxboxd.core.jolpica.Constructor
@@ -22,5 +23,5 @@ class User(
     val followers : List<User>? = mutableListOf(),
     val favDriver : Driver? = null,
     val favCircuit : Circuit? = null,
-    val favTeam : Constructor? = null,
+    val favTeam : Teams? = null,
 )

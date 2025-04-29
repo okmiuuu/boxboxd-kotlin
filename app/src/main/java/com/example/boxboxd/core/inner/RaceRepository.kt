@@ -71,6 +71,47 @@ class RaceRepository @Inject constructor(
         }
     }
 
+    suspend fun getAllCircuits(): List<Circuit> = withContext(Dispatchers.IO) {
+        val allCircuits = mutableListOf<Circuit>()
+        var offset = 0
+        val limit = 30 // Default API limit (from JSON: "limit": "30")
+
+        try {
+            do {
+                val response = raceApi.fetchAllCircuits(offset)
+                Log.d("RacesViewModel", "API Response (offset=$offset): $response")
+
+                val circuitTable = response.MRData.CircuitTable
+                Log.d("RacesViewModel", "CircuitTable (offset=$offset): $circuitTable")
+
+                val circuits = circuitTable?.Circuits ?: emptyList()
+                Log.d("RacesViewModel", "Circuits (offset=$offset): $circuits (Size: ${circuits.size})")
+
+                allCircuits.addAll(circuits)
+
+                // Parse total and offset from response
+                val total = response.MRData.total.toIntOrNull() ?: 0
+                Log.d("RacesViewModel", "Total Circuits: $total, Current Offset: $offset, Fetched: ${allCircuits.size}")
+
+                // Increment offset for next page
+                offset += limit
+
+                // Continue if more circuits remain
+            } while (offset < total && circuits.isNotEmpty())
+
+            if (allCircuits.isEmpty()) {
+                Log.w("RacesViewModel", "No circuits returned from API")
+            } else {
+                Log.d("RacesViewModel", "Total Circuits Fetched: ${allCircuits.size}")
+            }
+
+            allCircuits
+        } catch (e: Exception) {
+            Log.e("RacesViewModel", "Error fetching circuits: ${e.message}", e)
+            emptyList()
+        }
+    }
+
     suspend fun getRaceForSeasonAndCircuit(season : Int, circuit: Circuit) : Race? {
 
         val circuitId = circuit.circuitId
