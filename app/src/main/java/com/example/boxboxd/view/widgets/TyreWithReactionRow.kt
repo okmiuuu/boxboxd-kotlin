@@ -3,12 +3,14 @@ package com.example.boxboxd.view.widgets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.enums.TyresGrades
 import com.example.boxboxd.core.inner.objects.MapObjects
@@ -17,7 +19,7 @@ import com.example.boxboxd.core.inner.objects.MapObjects
 fun TyreWithReactionRow(tyreType : TyresGrades) {
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {

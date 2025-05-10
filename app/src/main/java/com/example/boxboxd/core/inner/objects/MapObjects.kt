@@ -60,6 +60,10 @@ object MapObjects {
         Mood.PREDICTABLE to R.string.predictable,
     )
 
+    val stringToMood: Map<Int, Mood> = moodToString.entries.associate { (mood, string) ->
+        string to mood
+    }
+
     val moodToPicture = mapOf(
         Mood.EXCITING to R.drawable.exciting,
         Mood.BORING to R.drawable.boring,

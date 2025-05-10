@@ -85,6 +85,7 @@ fun SelectFavDriverMenu(
             onDismissRequest = ::onDropdownDismissRequest,
             dropDownExpanded = dropDownExpanded.value,
             list = dropDownOptions.value,
+            label = stringResource(R.string.driver_name)
         )
 
         if (isLoading.value) {

@@ -59,7 +59,8 @@ fun RegistrationScreen(
             value = username,
             onValueChange = { username = it },
             label = { Text(stringResource(id = R.string.registration_username_label), color = MaterialTheme.colorScheme.tertiary) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -69,7 +70,8 @@ fun RegistrationScreen(
             onValueChange = { password = it },
             label = { Text(stringResource(id = R.string.registration_password_label), color = MaterialTheme.colorScheme.tertiary) },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))

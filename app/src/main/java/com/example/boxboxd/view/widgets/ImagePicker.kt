@@ -1,6 +1,7 @@
 package com.example.boxboxd.view.widgets
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -25,15 +26,15 @@ import com.google.accompanist.permissions.shouldShowRationale
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ImagePicker(
+    firstImageToShow : Uri? = null,
     onImageSelected: (Uri?) -> Unit
 ) {
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var imageUri by remember { mutableStateOf(firstImageToShow) }
 
-    val permission = if (android.os.Build.VERSION.SDK_INT >= 33) {
+    Log.i("IMAGE PICKER", imageUri.toString())
+
+    val permission =
         android.Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        android.Manifest.permission.READ_EXTERNAL_STORAGE
-    }
     val permissionState = rememberPermissionState(permission)
 
     val galleryLauncher = rememberLauncherForActivityResult(

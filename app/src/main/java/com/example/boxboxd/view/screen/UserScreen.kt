@@ -70,6 +70,7 @@ fun UserScreen (
     val isSelectTeamMenuOpened = remember { mutableStateOf(false) }
 
     val showConfirmDialog = remember { mutableStateOf(false) }
+    val showConfirmExitDialog = remember { mutableStateOf(false) }
 
     Box {
         Column (
@@ -133,16 +134,16 @@ fun UserScreen (
             if (isThatActiveUserPage) {
                 Column {
 
-                    MenuButton(
-                        buttonText = stringResource(R.string.settings),
-                        buttonImage = R.drawable.settings,
-                        onClick = { accountViewModel.goToSettings(user) }
-                    )
+//                    MenuButton(
+//                        buttonText = stringResource(R.string.settings),
+//                        buttonImage = R.drawable.settings,
+//                        onClick = { accountViewModel.goToSettings(user) }
+//                    )
 
                     MenuButton(
                         buttonText = stringResource(R.string.leave_account),
                         buttonImage = R.drawable.logout,
-                        onClick = { accountViewModel.logOut(context) }
+                        onClick = { showConfirmExitDialog.value = true }
                     )
 
                 }
@@ -254,6 +255,43 @@ fun UserScreen (
                             isSelectDriverMenuOpened.value = false
                             isSelectTeamMenuOpened.value = false
                             isSelectTrackMenuOpened.value = false
+                        }
+                    ) {
+                        Text (
+                            text = stringResource(R.string.yes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                },
+
+                )
+        }
+
+
+        if (showConfirmExitDialog.value) {
+            AlertDialog(
+                onDismissRequest = { showConfirmDialog.value = false },
+                text = { Text(stringResource(R.string.leave_dialog)) },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showConfirmExitDialog.value = false }
+                    ) {
+                        Text (
+                            text = stringResource(R.string.no),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            //close this dialog
+                            showConfirmExitDialog.value = false
+
+                            //leave account
+                            accountViewModel.logOut(context)
                         }
                     ) {
                         Text (

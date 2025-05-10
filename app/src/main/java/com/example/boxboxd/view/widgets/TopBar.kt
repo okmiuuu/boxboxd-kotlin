@@ -26,6 +26,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,7 +46,8 @@ import java.net.URLEncoder
 fun TopBar(
     isMainPage : Boolean = false,
     isUserPage : Boolean = false,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
+    onSearchClick : () -> Unit = {}
 ) {
     var title = stringResource(R.string.app_name).uppercase()
     var fontSize  = 28.sp
@@ -67,7 +71,7 @@ fun TopBar(
                 if (!isMainPage) {
                     IconButton(
                         onClick = {
-                            accountViewModel.navigateBack()
+                            accountViewModel.requestNavigateBack()
                         }
                     ) {
                         Icon(
@@ -75,6 +79,20 @@ fun TopBar(
                             contentDescription = "Back",
                             modifier = Modifier.size(40.dp),
                             tint = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                } else {
+                    IconButton(
+                        onClick = {
+                            onSearchClick()
+                        }
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.search),
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.size(40.dp),
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
                         )
                     }
                 }
@@ -87,7 +105,9 @@ fun TopBar(
                             .height(35.dp)
                             .width(35.dp)
                             .clickable(onClick = {
-                                accountViewModel.navigateToUserScreen(currentUser)
+                                if (currentUser.id != null) {
+                                    accountViewModel.requestNavigateToUserScreen(currentUser)
+                                }
                             })
                     )
                 }

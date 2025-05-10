@@ -34,6 +34,8 @@ class MainActivity : ComponentActivity() {
                 //load all drivers to firebase. called one time
                 //racesViewModel.loadAndUploadDrivers()
 
+                racesViewModel.loadAndUploadRaces()
+
                 val navController = rememberNavController()
 
                 val accountViewModel = ViewModelProvider(this, AccountViewModelFactory(navController))

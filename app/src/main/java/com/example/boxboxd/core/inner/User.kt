@@ -24,4 +24,5 @@ class User(
     val favDriver : Driver? = null,
     val favCircuit : Circuit? = null,
     val favTeam : Teams? = null,
+    val admin : Boolean = false,
 )

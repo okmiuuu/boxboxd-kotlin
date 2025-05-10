@@ -45,12 +45,12 @@ fun FavoritesTable(
 
     val context = LocalContext.current
 
-    var driverCode = "-"
-    var drawableTeamId = R.drawable.hungaroring
-    var drawableTrackId = R.drawable.hungaroring
+    var driverCode : String? = null
+    var drawableTeamId : Int? = null
+    var drawableTrackId : Int? = null
 
     if (driver != null) {
-        driverCode = driver.code ?: "-"
+        driverCode = driver.code
     }
 
     if (team != null) {
@@ -60,8 +60,6 @@ fun FavoritesTable(
     if (circuit != null) {
         drawableTrackId = racesViewModel.getDrawableResourceId(context, circuit.circuitId)
     }
-
-
 
     Column(
         modifier = Modifier
@@ -85,10 +83,15 @@ fun FavoritesTable(
                         }
                     }
             ) { //clickable box to change favorite
-                Text(
-                    text = driverCode,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                if (driverCode != null) {
+                    Text(
+                        text = driverCode,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    PlaceholderImage()
+                }
+
             }
         }
         Row (
@@ -107,14 +110,20 @@ fun FavoritesTable(
                         }
                     }
             ) { //clickable box to change favorite
-                Image(
-                    painter = painterResource(id = drawableTeamId),
-                    contentDescription = "Logo for fav constructor",
-                    modifier = Modifier
-                        .height(40.dp)
-                        .padding(5.dp),
-                    contentScale = ContentScale.Fit,
-                )
+                if (drawableTeamId != null) {
+                    Image(
+                        painter = painterResource(id = drawableTeamId),
+                        contentDescription = "Logo for fav constructor",
+                        modifier = Modifier
+                            .height(40.dp)
+                            .padding(5.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                } else {
+                    PlaceholderImage()
+                }
+
+
             }
 
         }
@@ -136,15 +145,20 @@ fun FavoritesTable(
                         }
                     }
             ) { //clickable box to change favorite
-                Image(
-                    painter = painterResource(id = drawableTrackId),
-                    contentDescription = "Circuit image for fav track",
-                    modifier = Modifier
-                        .height(40.dp)
-                        .padding(5.dp),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
-                )
+                if (drawableTrackId != null) {
+                    Image(
+                        painter = painterResource(id = drawableTrackId),
+                        contentDescription = "Circuit image for fav track",
+                        modifier = Modifier
+                            .height(40.dp)
+                            .padding(5.dp),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
+                    )
+                } else {
+                    PlaceholderImage()
+                }
+
             }
         }
     }

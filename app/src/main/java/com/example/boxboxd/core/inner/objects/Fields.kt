@@ -20,4 +20,10 @@ object Fields {
     const val FAV_DRIVER = "favDriver"
     const val FAV_TEAM = "favTeam"
     const val FAV_TRACK = "favTrack"
+
+    //for custom lists
+    const val LIST_ITEMS = "listItems"
+    const val NAME = "name"
+    const val DESCRIPTION = "description"
+    const val PICTURE = "picture"
 }

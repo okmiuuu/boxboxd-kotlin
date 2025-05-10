@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.animation.core.rememberTransition
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -25,14 +26,21 @@ import com.example.boxboxd.core.jolpica.Race
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.snapshots
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -57,6 +65,9 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
     private val _userEmail = MutableStateFlow<String?>(null)
     val userEmail: StateFlow<String?> get() = _userEmail
 
+    private val _isAdmin = MutableStateFlow<Boolean?>(false)
+    val isAdmin: StateFlow<Boolean?> get() = _isAdmin
+
     private val _userFavDriver = MutableStateFlow<Driver?>(null)
     val userFavDriver: StateFlow<Driver?> get() = _userFavDriver
 
@@ -75,36 +86,81 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
     private val _userObject = MutableStateFlow(User())
     val userObject: StateFlow<User> = _userObject.asStateFlow()
 
+    private val _expandedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val expandedStates: StateFlow<Map<String, Boolean>> = _expandedStates
+
+
+    private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
+    val navigationEvents: SharedFlow<NavigationEvent> = _navigationEvents.asSharedFlow()
 
     init {
         fetchUserData()
     }
 
-    fun navigateToUserScreen(user : User) {
-        val userJson = Gson().toJson(user)
-        val encodedUserJson = URLEncoder.encode(userJson, "UTF-8")
-        navController.navigate("${Routes.USER_SCREEN}/$encodedUserJson")
+    // Navigation event sealed class
+    sealed class NavigationEvent {
+        data class NavigateToUserScreen(val user: User) : NavigationEvent()
+        data class NavigateToRaceScreen(val race: Race) : NavigationEvent()
+        object NavigateToEntriesScreen : NavigationEvent()
+        object NavigateToListsScreen : NavigationEvent()
+        data class NavigateToRacesSearchScreen(val races: List<Race?>) : NavigationEvent()
+        object NavigateBack : NavigationEvent()
     }
 
-    fun navigateToRaceScreen(race : Race) {
-        val raceJson = Gson().toJson(race)
-        val encodedRaceJson = URLEncoder.encode(raceJson, "UTF-8")
-        navController.navigate("${Routes.RACE_SCREEN}/$encodedRaceJson")
+    // Updated navigation functions
+    fun requestNavigateToUserScreen(user: User) {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToUserScreen(user))
+        }
     }
 
-    fun navigateToEntriesScreen() {
-        navController.navigate(Routes.ENTRIES_SCREEN)
+    fun requestNavigateToRaceScreen(race: Race) {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToRaceScreen(race))
+        }
     }
 
-    fun navigateToListsScreen() {
-        navController.navigate(Routes.LISTS_SCREEN)
+    fun requestNavigateToEntriesScreen() {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToEntriesScreen)
+        }
     }
 
-    fun navigateBack() {
-        navController.popBackStack()
+    fun requestNavigateToListsScreen() {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToListsScreen)
+        }
     }
 
-    private fun fetchUserData() {
+    fun requestNavigateToRacesSearchScreen(racesList: List<Race?>) {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToRacesSearchScreen(racesList))
+        }
+    }
+
+    fun requestNavigateBack() {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateBack)
+        }
+    }
+
+    fun getIfRaceAlreadyLoggedByUser(race : Race) : Boolean {
+
+        val entriesList = userEntries.value
+
+        if (!entriesList.isNullOrEmpty()) {
+            val loggedRace = entriesList.find {
+                it.race?.season == race.season && it.race.round == race.round
+            }
+
+            loggedRace?.let { return true }
+        }
+
+        return false
+
+    }
+
+    fun fetchUserData() {
         fetchUser()
 
         userDocRef?.addSnapshotListener { documentSnapshot, e ->
@@ -112,6 +168,8 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
                 Log.w("Firestore", "Listen failed.", e)
                 return@addSnapshotListener
             }
+
+            Log.i("FETCH USER DATA doc", documentSnapshot.toString())
 
             if (documentSnapshot != null && documentSnapshot.exists()) {
                 val user = documentSnapshot.toObject(User::class.java)
@@ -128,6 +186,9 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
                 _userFavDriver.value = user?.favDriver
                 _userFavTeam.value = user?.favTeam
                 _userFavCircuit.value = user?.favCircuit
+
+                _isAdmin.value = user?.admin
+
 
                 _userPhotoUrl.value = auth.currentUser?.photoUrl
                 _userDisplayName.value = auth.currentUser?.displayName
@@ -208,8 +269,32 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
             }
     }
 
-    fun deleteRaceFromList() {
+    fun deleteRaceFromList(race: Race, customList: CustomList): Boolean {
+        if (customList.id == null) {
+            Log.e("AccountViewModel", "Invalid input: listId=${customList.id}, race.season=${race.season}, race.round=${race.round}")
+            return false
+        }
 
+        try {
+            val raceToDelete = customList.listItems?.find { item ->
+                item.season == race.season && item.round == race.round
+            }
+
+            if (raceToDelete == null) {
+                Log.d("AccountViewModel", "Race not found in list ${customList.id}: season=${race.season}, round=${race.round}")
+                return false
+            }
+
+            db.collection(Collections.CUSTOM_LISTS)
+                .document(customList.id)
+                .update(Fields.LIST_ITEMS, FieldValue.arrayRemove(raceToDelete))
+
+            Log.d("AccountViewModel", "Deleted race: ${race.raceName} (season=${race.season}, round=${race.round}) from list ${customList.id}")
+            return true
+        } catch (e: Exception) {
+            Log.e("AccountViewModel", "Error deleting race from list ${customList.id}: ${e.message}", e)
+            return false
+        }
     }
 
     fun deleteList(customList: CustomList) {
@@ -229,18 +314,6 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
         } ?: run {
             Log.e("AccountViewModel", "Cannot delete list: ID is null")
         }
-    }
-
-    fun editListPicture(customList: CustomList) {
-
-    }
-
-    fun editListName(customList: CustomList) {
-
-    }
-
-    fun editListDescription(customList: CustomList) {
-
     }
 
     fun getUserStat(statType: StatTypes, user : User) : Int {
@@ -637,4 +710,67 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
             false
         }
     }
+
+    fun deleteEntry(entry: Entry) {
+        entry.id?.let { entryId ->
+            db.collection(Collections.ENTRIES)
+                .document(entryId)
+                .delete()
+                .addOnSuccessListener {
+                    Log.d("AccountViewModel", "Entry deleted: $entryId")
+                    _userEntries.update { currentEntries ->
+                        currentEntries?.filterNot { it.id == entryId }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("AccountViewModel", "Error deleting entry: $entryId", e)
+                }
+        } ?: run {
+            Log.e("AccountViewModel", "Cannot delete entry: ID is null")
+        }
+
+        fetchUserData()
+    }
+
+    fun changeListToNew(id : String?, newList : CustomList) : Boolean{
+        if (id == null) {
+            Log.e("AccountViewModel", "Invalid input: listId=${id}")
+            return false
+        }
+
+        try {
+
+            db.collection(Collections.CUSTOM_LISTS)
+                .document(id)
+                .update(Fields.NAME, newList.name)
+
+            db.collection(Collections.CUSTOM_LISTS)
+                .document(id)
+                .update(Fields.DESCRIPTION, newList.description)
+
+            db.collection(Collections.CUSTOM_LISTS)
+                .document(id)
+                .update(Fields.PICTURE, newList.picture)
+
+            Log.d("AccountViewModel", "Updated list ${id}")
+            return true
+        } catch (e: Exception) {
+            Log.e("AccountViewModel", "Error updating list ${id}: ${e.message}", e)
+            return false
+        }
+    }
+
+
+
+    fun setListExpandedState(listId: String, isExpanded: Boolean) {
+        _expandedStates.value = _expandedStates.value.toMutableMap().apply {
+            this[listId] = isExpanded
+        }
+        Log.d("AccountViewModel", "Set isExpanded=$isExpanded for list $listId")
+    }
+
+    fun getListExpandedState(listId: String): Boolean {
+        return _expandedStates.value[listId] ?: false
+    }
+
 }

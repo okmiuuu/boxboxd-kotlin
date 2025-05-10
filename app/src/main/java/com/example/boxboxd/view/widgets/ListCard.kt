@@ -33,11 +33,14 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.CustomList
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.layout.onGloballyPositioned
+import com.example.boxboxd.core.jolpica.Race
+import com.example.boxboxd.model.TintedPainter
 import com.example.boxboxd.viewmodel.AccountViewModel
 import com.example.boxboxd.viewmodel.RacesViewModel
 
@@ -50,13 +53,27 @@ fun ListCard(
     onEditList: (CustomList) -> Unit,
     onClick: () -> Unit
 ) {
-
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(customList.id?.let { accountViewModel.getListExpandedState(it) } ?: false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showCardMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDeleteRaceDialog by remember { mutableStateOf(false) }
     val racesCount = customList.listItems?.size ?: 0
     var cardWidth by remember { mutableFloatStateOf(0f) }
+    var cardHeight by remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
+    val raceToDelete = remember { mutableStateOf<Race?>(null) }
+
+    var cardCenterX by remember { mutableFloatStateOf(0f) }
+
+    val placeholderPainter = TintedPainter(
+        painter = painterResource(R.drawable.placeholder),
+        tint = MaterialTheme.colorScheme.tertiary
+    )
+    val errorPainter = TintedPainter(
+        painter = painterResource(R.drawable.placeholder),
+        tint = MaterialTheme.colorScheme.tertiary
+    )
 
     Box {
         Column(
@@ -64,17 +81,24 @@ fun ListCard(
                 .padding(10.dp)
                 .onGloballyPositioned { coordinates ->
                     cardWidth = coordinates.size.width.toFloat()
+                    cardHeight = coordinates.size.height.toFloat()
                 }
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = {
-                            if (isMainVersion) {
-                                isExpanded = !isExpanded
+                            if (isMainVersion && racesCount > 0) {
+                                val newExpanded = !isExpanded
+                                isExpanded = newExpanded
+                                customList.id?.let { listId ->
+                                    accountViewModel.setListExpandedState(listId, newExpanded)
+                                }
                             }
                             onClick()
                         },
                         onLongPress = {
-                            showMenu = true
+                            if (isMainVersion) {
+                                showMenu = true
+                            }
                         }
                     )
                 }
@@ -96,8 +120,8 @@ fun ListCard(
                                 null
                             }
                         },
-                        placeholder = painterResource(R.drawable.user),
-                        error = painterResource(R.drawable.heart)
+                        placeholder = placeholderPainter,
+                        error = errorPainter,
                     ),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
@@ -122,7 +146,12 @@ fun ListCard(
                     raceItems = customList.listItems ?: emptyList(),
                     title = null,
                     racesViewModel = racesViewModel,
-                    accountViewModel = accountViewModel
+                    accountViewModel = accountViewModel,
+                    forCardLongPress = { raceWithPosition ->
+                        cardCenterX = raceWithPosition.position
+                        showCardMenu = true
+                        raceToDelete.value = raceWithPosition.race
+                    }
                 )
             } else if (isMainVersion) {
                 Column(
@@ -148,9 +177,13 @@ fun ListCard(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
             offset = with(density) {
+
+                Log.i("cardHeight", cardHeight.toDp().toString())
+                Log.i("offsetY", (cardHeight.toDp() - 200.dp).toString())
+
                 DpOffset(
                     x = (cardWidth.toDp() - 120.dp),
-                    y = ((-100).dp)
+                    y = (-cardHeight.toDp())
                 )
             }
         ) {
@@ -180,27 +213,89 @@ fun ListCard(
             )
         }
 
+
+        DropdownMenu(
+            expanded = showCardMenu,
+            onDismissRequest = { showCardMenu = false },
+            offset = with(density) {
+                DpOffset(
+                    x = (cardCenterX.toDp()),
+                    y = (cardHeight.toDp() - 52.dp)
+                )
+            }
+        ) {
+            DropdownMenuItem(
+                modifier = Modifier.width(112.dp),
+                text = {
+                    Text(
+                        text = "Delete race from list",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                },
+                onClick = {
+                    showDeleteRaceDialog = true
+                    showCardMenu = false
+                }
+            )
+        }
+
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Delete List") },
-                text = { Text("Are you sure you want to delete ${customList.name ?: "this list"}?") },
+                title = { Text("Delete List", style = MaterialTheme.typography.bodyMedium) },
+                text = { Text("Are you sure you want to delete ${customList.name ?: "this list"}?", style = MaterialTheme.typography.bodySmall) },
                 confirmButton = {
                     TextButton(
                         onClick = {
+
                             accountViewModel.deleteList(
                                 customList = customList,
-
                             )
+
                             showDeleteDialog = false
                         }
                     ) {
-                        Text("Delete")
+                        Text("Delete", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Cancel")
+                        Text("Cancel", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            )
+        }
+
+        if (showDeleteRaceDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteRaceDialog = false },
+                title = { Text("Delete race from list", style = MaterialTheme.typography.bodyMedium) },
+                text = { Text("Are you sure you want to delete race from list?", style = MaterialTheme.typography.bodySmall) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+
+                            val delRaceValue = raceToDelete.value
+
+                            if (delRaceValue != null) {
+
+
+                                accountViewModel.deleteRaceFromList(
+                                    race = delRaceValue,
+                                    customList = customList,
+                                )
+                            }
+
+
+                            showDeleteRaceDialog = false
+                        }
+                    ) {
+                        Text("Delete", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteRaceDialog = false }) {
+                        Text("Cancel", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             )

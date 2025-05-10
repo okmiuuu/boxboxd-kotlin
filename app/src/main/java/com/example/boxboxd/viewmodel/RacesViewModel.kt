@@ -2,6 +2,7 @@ package com.example.boxboxd.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.yml.charts.common.extensions.isNotNull
@@ -16,6 +17,7 @@ import com.example.boxboxd.core.jolpica.Circuit
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.core.jolpica.Race
 import com.example.boxboxd.model.DropdownItem
+import com.example.boxboxd.model.ScrollState
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.WriteBatch
@@ -27,6 +29,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -38,7 +41,9 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
+class RacesViewModel(private val repository: RaceRepository
+
+) : ViewModel() {
     private val db = Firebase.firestore
     private val auth = Firebase.auth
 
@@ -85,6 +90,33 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         }
     }
 
+    fun loadAndUploadRaces() {
+        viewModelScope.launch {
+            println("Starting races upload process")
+            val allRaces = mutableListOf<Race>()
+
+            val deferredRaces = async(Dispatchers.IO) {
+                try {
+                    val races = repository.getRacesForSeason(2025)
+                    println("Loaded ${races.size} races for season 2025")
+                    races
+                } catch (e: Exception) {
+                    println("Error loading races for season 2025: ${e.message}")
+                    emptyList() // Return empty list for failed season
+                }
+            }
+
+            val seasonRaces = deferredRaces.await()
+            allRaces.addAll(seasonRaces)
+            println("Total drivers loaded: ${allRaces.size}")
+
+            uploadRacesToFirestore(db, allRaces).fold(
+                onSuccess = { println("Upload completed successfully") },
+                onFailure = { e -> println("Upload failed: ${e.message}") }
+            )
+        }
+    }
+
     fun loadAndUploadDrivers() {
         viewModelScope.launch {
             println("Starting driver upload process")
@@ -99,7 +131,7 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
                         driversForSeason
                     } catch (e: Exception) {
                         println("Error loading drivers for season $seasonYear: ${e.message}")
-                        emptyList<Driver>() // Return empty list for failed season
+                        emptyList() // Return empty list for failed season
                     }
                 }
             }
@@ -122,6 +154,26 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         val uniqueDrivers = drivers.distinctBy { it.driverId }
         println("Deduplicated ${drivers.size} drivers to ${uniqueDrivers.size} unique drivers")
         return uniqueDrivers
+    }
+
+    suspend fun uploadRacesToFirestore(db: FirebaseFirestore, races: List<Race>): Result<Unit> {
+        return try {
+            println("Attempting to upload ${races.size} races")
+            val collectionRef = db.collection(Collections.RACES)
+
+            val batch: WriteBatch = db.batch()
+            races.forEach { race ->
+                val docRef = collectionRef.document(race.season.toString() + race.round)
+                batch.set(docRef, race)
+            }
+
+            batch.commit().await()
+            println("Successfully uploaded ${races.size} races to Firestore")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("Error uploading races to Firestore: ${e.message}")
+            Result.failure(e)
+        }
     }
 
     suspend fun uploadDriversToFirestore(db: FirebaseFirestore, drivers: List<Driver>): Result<Unit> {
@@ -183,6 +235,10 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         return repository.getAllCircuits()
     }
 
+    suspend fun getRacesForSeason(season : Int) : List<Race?> {
+        return repository.getRacesForSeason(season)
+    }
+
     fun addPicturesToCircuitsList(context: Context, circuitsList : List<Circuit?>) : List<DropdownItem> {
 
         val resultList: MutableList<DropdownItem> = mutableListOf()
@@ -204,6 +260,7 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         val circuitsList = getCircuitsFromRepository()
         addPicturesToCircuitsList(context, circuitsList)
     }
+
 
 
     fun getListOfTeamItems(): List<DropdownItem> {
@@ -245,6 +302,19 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
         Log.i("isLiked", isLiked.toString())
 
         return isLiked
+    }
+
+    fun getResourceId(context: Context, name: String, resourceType: String): Int {
+        return try {
+            val id = context.resources.getIdentifier(name.lowercase(), resourceType, context.packageName)
+            if (id == 0) {
+                Log.w("RacesViewModel", "Resource not found: $resourceType/$name")
+            }
+            id
+        } catch (e: Exception) {
+            Log.e("RacesViewModel", "Error getting resource ID for $resourceType/$name", e)
+            0
+        }
     }
 
     fun getDrawableResourceId(context: Context, drawableName: String?): Int {
@@ -494,5 +564,28 @@ class RacesViewModel(private val repository: RaceRepository) : ViewModel() {
             null
         }
     }
+
+//    private val _scrollState = MutableStateFlow(
+//        ScrollState(
+//            firstVisibleItemIndex = savedStateHandle.get<Int>("firstVisibleItemIndex") ?: 0,
+//            firstVisibleItemScrollOffset = savedStateHandle.get<Int>("firstVisibleItemScrollOffset") ?: 0
+//        )
+//    )
+//
+//    private val _scrollStates = MutableStateFlow<Map<String, ScrollState>>(emptyMap())
+//    val scrollStates: StateFlow<Map<String, ScrollState>> = _scrollStates.asStateFlow()
+//
+//    fun saveScrollState(rowId: String, firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+//        _scrollStates.update {
+//            it + (rowId to ScrollState(firstVisibleItemIndex, firstVisibleItemScrollOffset))
+//        }
+//        savedStateHandle["scrollState_$rowId"] = ScrollState(firstVisibleItemIndex, firstVisibleItemScrollOffset)
+//    }
+//
+//    fun getScrollState(rowId: String): ScrollState {
+//        return _scrollStates.value[rowId]
+//            ?: savedStateHandle.get<ScrollState>("scrollState_$rowId")
+//            ?: ScrollState(0, 0)
+//    }
 
 }

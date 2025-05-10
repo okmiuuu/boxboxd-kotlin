@@ -56,7 +56,7 @@ fun UserStatsTable(
                 count = accountViewModel.getUserStat(StatTypes.ENTRIES, user),
                 onClick = {
                     Log.i("userRow1", "click")
-                    accountViewModel.navigateToEntriesScreen()
+                    accountViewModel.requestNavigateToEntriesScreen()
                 },
             )
 
@@ -66,7 +66,7 @@ fun UserStatsTable(
                 count = accountViewModel.getUserStat(StatTypes.LISTS, user),
                 onClick = {
                     Log.i("userRow1", "click")
-                    accountViewModel.navigateToListsScreen()
+                    accountViewModel.requestNavigateToListsScreen()
                 },
             )
         }

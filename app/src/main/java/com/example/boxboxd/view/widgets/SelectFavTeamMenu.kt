@@ -73,6 +73,7 @@ fun SelectFavTeamMenu(
             onDismissRequest = ::onDropdownDismissRequest,
             dropDownExpanded = dropDownExpanded.value,
             list = dropDownOptions.value,
+            label = stringResource(R.string.team_name)
         )
 
         MainButton(

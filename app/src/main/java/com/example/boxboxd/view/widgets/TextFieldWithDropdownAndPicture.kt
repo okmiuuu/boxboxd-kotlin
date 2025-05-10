@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ fun TextFieldWithDropdownAndPicture(
     onDismissRequest: () -> Unit,
     dropDownExpanded: Boolean,
     list: List<DropdownItem>,
+    label : String
 ) {
     Box(modifier) {
         TextField(
@@ -41,6 +43,7 @@ fun TextFieldWithDropdownAndPicture(
                         onDismissRequest()
                 },
             value = value,
+            label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
             onValueChange = setValue,
             textStyle = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface
@@ -69,7 +72,8 @@ fun TextFieldWithDropdownAndPicture(
                                     contentDescription = "${item.text} image",
                                     modifier = Modifier
                                         .size(40.dp)
-                                        .padding(end = 8.dp)
+                                        .padding(end = 8.dp),
+                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
                                 )
                             } ?: Spacer(modifier = Modifier.size(40.dp))
                             Text(

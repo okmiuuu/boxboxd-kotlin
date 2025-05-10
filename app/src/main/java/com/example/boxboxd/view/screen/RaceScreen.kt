@@ -1,5 +1,6 @@
 package com.example.boxboxd.view.screen
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.boxboxd.R
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.core.jolpica.Race
@@ -69,6 +71,15 @@ fun RaceScreen (
     val isLogRaceMenuOpened = remember { mutableStateOf(false) }
     val isListMenuOpened = remember { mutableStateOf(false) }
     val showConfirmDialog = remember { mutableStateOf(false) }
+    val isLogging = remember { mutableStateOf(false) }
+
+    val isRaceAlreadyLogged = remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        Log.i("ENTRIES COUNT", accountViewModel.userEntries.value?.size.toString())
+
+        isRaceAlreadyLogged.value = accountViewModel.getIfRaceAlreadyLoggedByUser(race = item)
+    }
 
     LaunchedEffect(Unit) {
         launch {
@@ -94,15 +105,16 @@ fun RaceScreen (
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(170.dp)
                     .background(color)
-                    .padding(20.dp)
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
                     painter = painterResource(id = drawableResId),
                     contentDescription = "Circuit image for ${item.Circuit?.circuitName}",
                     modifier = Modifier
-                        .fillMaxHeight(0.9f),
+                        .fillMaxWidth(0.3f),
                     contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
                 )
@@ -111,6 +123,7 @@ fun RaceScreen (
                     Text(
                         text = item.raceName,
                         style = MaterialTheme.typography.titleLarge,
+                        fontSize = 18.sp,
                         modifier = Modifier.padding(8.dp),
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -138,6 +151,7 @@ fun RaceScreen (
                         MainButton(
                             buttonText = stringResource(R.string.log_as_watched),
                             onClick = { isLogRaceMenuOpened.value = true },
+                            enabled = !isRaceAlreadyLogged.value && !isLogging.value
                         )
 
                         AddButton (
@@ -248,9 +262,12 @@ fun RaceScreen (
             ) {
                 LogRaceMenu(
                     accountViewModel = accountViewModel,
+                    racesViewModel = racesViewModel,
                     race = item,
+                    isLogging = isLogging,
                     onLogSubmitted = {
                         isLogRaceMenuOpened.value = false
+                        isRaceAlreadyLogged.value = true
                     }
                 )
             }

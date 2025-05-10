@@ -22,12 +22,22 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Red,
+    primary = BrightRed,
     secondary = AccentRed,
     tertiary = DarkGrey,
     background = White,
-    surface = LightGrey,
+    surface = WhiteGrey,
     onSurface = MediumGrey
+)
+
+private val MclarenColorScheme = darkColorScheme(
+    primary = OrangeMain,
+    secondary = OrangeAccent,
+    tertiary = White,
+    background = DarkGrey,
+    surface = LightGrey,
+    onSurface = MediumGrey,
+    error = BrightRed
 )
 
 val textColor = { isDarkTheme: Boolean -> if (isDarkTheme) DarkColorScheme.tertiary else LightColorScheme.tertiary }

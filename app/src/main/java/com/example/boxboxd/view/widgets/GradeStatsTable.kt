@@ -66,10 +66,9 @@ fun GradeStatsTable(gradeToCountMap : Map<Int, Int>) {
 @Composable
 fun StatRectangle (grade : Int, countForGrade : Int, fullEntryCount : Int) {
 
+    var height : Float = 100 - (countForGrade.toFloat() / fullEntryCount.toFloat() ) * 100
 
-    val height : Float = 100 - (countForGrade.toFloat() / fullEntryCount.toFloat() ) * 100
-
-    Log.i("HEIGHT FOR ${grade}", height.toString())
+    if (fullEntryCount == 0 ) height = 95f
 
     val tyreType = MapObjects.gradeToTyre[grade] ?: TyresGrades.WET
 

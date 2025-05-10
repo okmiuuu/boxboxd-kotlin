@@ -87,7 +87,8 @@ fun LoginScreen(
             value = username.value,
             onValueChange = { username.value = it },
             label = { Text(stringResource(id = R.string.login_email_label), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodyMedium) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -98,6 +99,7 @@ fun LoginScreen(
             label = { Text(stringResource(id = R.string.login_password_label), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodyMedium) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
+            singleLine = true
         )
 
         TextButton(

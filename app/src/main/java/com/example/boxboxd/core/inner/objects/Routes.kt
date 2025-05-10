@@ -8,4 +8,5 @@ object Routes {
     const val USER_SCREEN = "userScreen"
     const val LISTS_SCREEN = "listsScreen"
     const val ENTRIES_SCREEN = "entriesScreen"
+    const val RACES_SEARCH_SCREEN = "racesSearchScreen"
 }

@@ -1,5 +1,6 @@
 package com.example.boxboxd.view.widgets
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,36 +20,47 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.Entry
 import com.example.boxboxd.core.inner.User
 import com.example.boxboxd.core.inner.enums.Mood
+import com.example.boxboxd.core.inner.enums.Teams
 import com.example.boxboxd.core.inner.enums.TyresGrades
 import com.example.boxboxd.core.inner.enums.Visibility
 import com.example.boxboxd.core.inner.objects.MapObjects
 import com.example.boxboxd.core.jolpica.Race
+import com.example.boxboxd.model.DropdownItem
 import com.example.boxboxd.viewmodel.AccountViewModel
+import com.example.boxboxd.viewmodel.RacesViewModel
 import com.google.firebase.Timestamp
+import kotlinx.coroutines.launch
 
 @Composable
 fun LogRaceMenu(
     accountViewModel: AccountViewModel,
+    racesViewModel: RacesViewModel,
     race: Race,
-    onLogSubmitted: () -> Unit
+    onLogSubmitted: () -> Unit,
+    isLogging: MutableState<Boolean> // Add isLogging
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val errorMessage = remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = Modifier.fillMaxHeight(0.5f),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         val comment = remember { mutableStateOf("") }
-
+        val mood = remember { mutableStateOf<Mood?>(null) }
         val selectedTyre = remember { mutableStateOf<TyresGrades?>(null) }
 
         Text(
@@ -61,17 +73,21 @@ fun LogRaceMenu(
         )
         GradeSelector(selectedTyre = selectedTyre)
 
+        ChooseMoodBox(
+            racesViewModel = racesViewModel
+        ) { newMood ->
+            mood.value = newMood
+        }
+
         TextField(
             value = comment.value,
-            onValueChange = {
-                comment.value = it
-            },
+            onValueChange = { comment.value = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp)
                 .height(100.dp),
             label = {
-                Text (
+                Text(
                     text = stringResource(R.string.any_thoughts),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -85,25 +101,48 @@ fun LogRaceMenu(
         MainButton(
             buttonText = stringResource(R.string.add_log),
             onClick = {
-                val rating = MapObjects.tyreToGrade[selectedTyre.value]
+                coroutineScope.launch {
+                    isLogging.value = true
+                    errorMessage.value = null
+                    try {
+                        val rating = MapObjects.tyreToGrade[selectedTyre.value]
+                        val entry = Entry(
+                            race = race,
+                            userId = accountViewModel.userId,
+                            mood = mood.value,
+                            rating = rating,
+                            text = comment.value,
+                            createdAt = Timestamp.now(),
+                            updatedAt = Timestamp.now(),
+                            visibility = Visibility.PUBLIC,
+                            user = accountViewModel.userObject.value
+                        )
+                        accountViewModel.logRace(entry)
 
-                val entry = Entry(
-                    race = race,
-                    userId = accountViewModel.userId,
-                    mood = null,
-                    rating = rating,
-                    text = comment.value,
-                    createdAt = Timestamp.now(),
-                    updatedAt = Timestamp.now(),
-                    visibility = Visibility.PUBLIC,
-                    user = accountViewModel.userObject.value
-                )
-
-                accountViewModel.logRace(entry)
-                onLogSubmitted()
+                        Log.d("LogRaceMenu", "Race logged: ${race.raceName}")
+                    } catch (e: Exception) {
+                        errorMessage.value = "Error logging race: ${e.message}"
+                        Log.e("LogRaceMenu", "Error logging race", e)
+                    } finally {
+                        isLogging.value = false
+                        coroutineScope.launch {
+                            accountViewModel.fetchUserData()
+                            onLogSubmitted()
+                        }
+                    }
+                }
             },
+            enabled = selectedTyre.value != null && mood.value != null && !isLogging.value
         )
 
+        errorMessage.value?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 }
 

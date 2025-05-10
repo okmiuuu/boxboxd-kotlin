@@ -65,7 +65,8 @@ fun ForgotPasswordDialog(onDismiss: () -> Unit, onReset: (String) -> Unit) {
                         unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface,
                         focusedLabelColor = MaterialTheme.colorScheme.primary,
                         unfocusedLabelColor = MaterialTheme.colorScheme.onSurface
-                    )
+                    ),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

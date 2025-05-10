@@ -119,7 +119,8 @@ fun CreateListMenu(
 
                 onLogSubmitted()
             },
-            shape = RoundedCornerShape(10.dp)
+            shape = RoundedCornerShape(10.dp),
+            enabled = (name.value.isNotEmpty())
         ) {
             Text(
                 text = stringResource(R.string.create),

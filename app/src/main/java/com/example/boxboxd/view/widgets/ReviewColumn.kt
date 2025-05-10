@@ -46,7 +46,9 @@ fun ReviewColumn(
             }
         } else {
             items(raceEntries.value) { entry ->
-                EntryCard(entry, accountViewModel, racesViewModel)
+                if (!entry.text.isNullOrEmpty()) {
+                    EntryCard(entry, accountViewModel, racesViewModel)
+                }
             }
         }
     }

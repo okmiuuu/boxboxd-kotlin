@@ -27,9 +27,8 @@ import java.time.LocalDate
 
 @Composable
 fun MainScreen (
-    navController: NavHostController,
     racesViewModel: RacesViewModel,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
 ) {
 
     val racesThisSeason by racesViewModel.racesThisSeason.collectAsStateDelegate()

@@ -90,6 +90,7 @@ fun SelectFavCircuitMenu(
             onDismissRequest = ::onDropdownDismissRequest,
             dropDownExpanded = dropDownExpanded.value,
             list = dropDownOptions.value,
+            label = stringResource(R.string.circuit_name)
         )
 
         MainButton(

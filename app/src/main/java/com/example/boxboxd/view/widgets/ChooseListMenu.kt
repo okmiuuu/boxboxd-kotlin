@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.boxboxd.R
+import com.example.boxboxd.core.inner.CustomList
 import com.example.boxboxd.core.jolpica.Race
 import com.example.boxboxd.viewmodel.AccountViewModel
 import com.example.boxboxd.viewmodel.RacesViewModel
@@ -49,6 +50,11 @@ fun ChooseListMenu(
     val userLists = userListsState.value ?: emptyList()
     val context = LocalContext.current
     val toastText = stringResource(R.string.race_added)
+
+    val listToEdit = remember { mutableStateOf<CustomList?>(null)}
+
+    val isEditListMenuOpened = remember { mutableStateOf(false) }
+
 
     Box(modifier = modifier) {
         Column(modifier = Modifier
@@ -107,7 +113,8 @@ fun ChooseListMenu(
                             accountViewModel = accountViewModel,
                             racesViewModel = racesViewModel,
                             onEditList = {
-
+                                listToEdit.value = it
+                                isEditListMenuOpened.value = true
                             },
                             onClick = {
                                 if (!isListScreen && race != null) {
@@ -168,6 +175,45 @@ fun ChooseListMenu(
                 )
             }
         }
+
+        if (isEditListMenuOpened.value) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
+                    .clickable(
+                        onClick = { showConfirmDialog.value = true },
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    )
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .clickable(
+                        onClick = { },
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    )
+                    .padding(16.dp)
+            ) {
+
+                val listToEditConst = listToEdit.value
+
+                listToEditConst?.let {
+                    EditListMenu(
+                        listToEdit = listToEditConst,
+                        accountViewModel = accountViewModel,
+                        onLogSubmitted = {
+                            isEditListMenuOpened.value = false
+                        }
+                    )
+                }
+            }
+        }
     }
 
     if (showDuplicateDialog.value) {
@@ -214,6 +260,7 @@ fun ChooseListMenu(
                         Log.i("ChooseListMenu", "Confirm dialog confirmed, calling onDismiss")
                         showConfirmDialog.value = false
                         isCreateListMenuOpened.value = false
+                        isEditListMenuOpened.value = false
                     }
                 ) {
                     Text(
