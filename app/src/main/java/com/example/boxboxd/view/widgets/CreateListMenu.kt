@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,14 +44,14 @@ fun CreateListMenu(
     val selectedImageUri = remember { mutableStateOf<Uri?>(null) }
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.create_list),
             style = MaterialTheme.typography.bodyMedium
         )
 
-        Row {
+        Row{
 
             ImagePicker(
                 onImageSelected = { uri ->

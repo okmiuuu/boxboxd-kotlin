@@ -1,6 +1,7 @@
 package com.example.boxboxd.view.screen
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -71,6 +72,19 @@ fun UserScreen (
 
     val showConfirmDialog = remember { mutableStateOf(false) }
     val showConfirmExitDialog = remember { mutableStateOf(false) }
+
+    BackHandler(enabled = showConfirmDialog.value || showConfirmExitDialog.value) {
+        showConfirmDialog.value = false
+        showConfirmExitDialog.value = false
+    }
+
+    BackHandler(enabled = isSelectDriverMenuOpened.value || isSelectTrackMenuOpened.value || isSelectTeamMenuOpened.value) {
+        if (isSelectTrackMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+        if (isSelectDriverMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+        if (isSelectTeamMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+    }
+
+
 
     Box {
         Column (
@@ -151,81 +165,90 @@ fun UserScreen (
         }
 
         if (isSelectDriverMenuOpened.value) {
-            BoxForOverlayMenu { showConfirmDialog.value = true }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = {  },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
-                SelectFavDriverMenu(
-                    accountViewModel = accountViewModel,
-                    racesViewModel = racesViewModel,
-                    onLogSubmitted = { newFavDriver ->
-                        favDriver.value = newFavDriver
-                        isSelectDriverMenuOpened.value = false
+            BoxForOverlayMenu (
+                onClick = { showConfirmDialog.value = true },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = {  },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
+                        SelectFavDriverMenu(
+                            accountViewModel = accountViewModel,
+                            racesViewModel = racesViewModel,
+                            onLogSubmitted = { newFavDriver ->
+                                favDriver.value = newFavDriver
+                                isSelectDriverMenuOpened.value = false
+                            }
+                        )
                     }
-                )
-            }
+                }
+            )
         }
 
         if (isSelectTeamMenuOpened.value) {
-            BoxForOverlayMenu { showConfirmDialog.value = true }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = {  },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
-                SelectFavTeamMenu (
-                    accountViewModel = accountViewModel,
-                    racesViewModel = racesViewModel,
-                    onLogSubmitted = { newFavTeam ->
-                        favTeam.value = newFavTeam
-                        isSelectTeamMenuOpened.value = false
+            BoxForOverlayMenu (
+                onClick = { showConfirmDialog.value = true },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = {  },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
+                        SelectFavTeamMenu (
+                            accountViewModel = accountViewModel,
+                            racesViewModel = racesViewModel,
+                            onLogSubmitted = { newFavTeam ->
+                                favTeam.value = newFavTeam
+                                isSelectTeamMenuOpened.value = false
+                            }
+                        )
                     }
-                )
-            }
+                }
+            )
         }
 
         if (isSelectTrackMenuOpened.value) {
-            BoxForOverlayMenu { showConfirmDialog.value = true }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = {  },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
-                SelectFavCircuitMenu (
-                    accountViewModel = accountViewModel,
-                    racesViewModel = racesViewModel,
-                    onLogSubmitted = { newFavCircuit ->
-                        favCircuit.value = newFavCircuit
-                        isSelectTrackMenuOpened.value = false
+            BoxForOverlayMenu (
+                onClick = { showConfirmDialog.value = true },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = {  },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
+                        SelectFavCircuitMenu (
+                            accountViewModel = accountViewModel,
+                            racesViewModel = racesViewModel,
+                            onLogSubmitted = { newFavCircuit ->
+                                favCircuit.value = newFavCircuit
+                                isSelectTrackMenuOpened.value = false
+                            }
+                        )
                     }
-                )
-            }
+                }
+            )
         }
 
 

@@ -1,6 +1,5 @@
 package com.example.boxboxd.view.widgets
 
-import android.util.Log
 import java.net.URLDecoder
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -56,37 +55,20 @@ fun AppNavigation(
     val context = LocalContext.current
     val authState = authViewModel.authState.collectAsState()
 
-    // Ensure app starts on MainScreen
-    LaunchedEffect(Unit) {
-        Log.d("AppNavigation", "Navigating to MainScreen on startup")
-        navController.navigate(Routes.MAIN_SCREEN) {
-            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-        }
-    }
-
-    // Log navigation changes for debugging
-    LaunchedEffect(navController) {
-        navController.currentBackStackEntryFlow.collect { entry ->
-            Log.d("AppNavigation", "Current route: ${entry.destination.route}")
-        }
-    }
-
     // Handle authentication state changes
     LaunchedEffect(authState.value) {
-        Log.d("AppNavigation", "Auth state changed: ${authState.value}")
         when (authState.value) {
             is AuthViewModel.AuthState.Success -> {
-                Log.d("AppNavigation", "AuthState.Success, navigating to MainScreen")
+                // Navigate to MainScreen after successful login/registration
                 navController.navigate(Routes.MAIN_SCREEN) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             }
             is AuthViewModel.AuthState.Error -> {
-                Log.d("AppNavigation", "AuthState.Error: ${(authState.value as AuthViewModel.AuthState.Error).message}")
-                // Errors are handled in LoginScreen/RegistrationScreen via Toast
+                // Errors are handled in AuthViewModel via Toast
             }
             is AuthViewModel.AuthState.Idle -> {
-                Log.d("AppNavigation", "AuthState.Idle, no navigation")
+                // Do nothing
             }
         }
     }
@@ -97,46 +79,35 @@ fun AppNavigation(
             accountViewModel.navigationEvents.collectLatest { event ->
                 when (event) {
                     is AccountViewModel.NavigationEvent.NavigateToMainScreen -> {
-                        Log.d("AppNavigation", "Navigating to MainScreen")
                         navController.navigate(Routes.MAIN_SCREEN) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
                     }
                     is AccountViewModel.NavigationEvent.NavigateToLoginScreen -> {
-                        Log.d("AppNavigation", "Navigating to LoginScreen")
-                        navController.navigate(Routes.LOGIN) {
-                            popUpTo(Routes.MAIN_SCREEN) { inclusive = false }
-                        }
+                        navController.navigate(Routes.LOGIN)
                     }
                     is AccountViewModel.NavigationEvent.NavigateToRegistrationScreen -> {
-                        Log.d("AppNavigation", "Navigating to RegistrationScreen")
                         navController.navigate(Routes.REGISTRATION)
                     }
                     is AccountViewModel.NavigationEvent.NavigateToUserScreen -> {
                         val userJson = URLEncoder.encode(gson.toJson(event.user), "UTF-8")
-                        Log.d("AppNavigation", "Navigating to UserScreen")
                         navController.navigate("${Routes.USER_SCREEN}/$userJson")
                     }
                     is AccountViewModel.NavigationEvent.NavigateToRaceScreen -> {
                         val raceJson = URLEncoder.encode(gson.toJson(event.race), "UTF-8")
-                        Log.d("AppNavigation", "Navigating to RaceScreen")
                         navController.navigate("${Routes.RACE_SCREEN}/$raceJson")
                     }
                     is AccountViewModel.NavigationEvent.NavigateToEntriesScreen -> {
-                        Log.d("AppNavigation", "Navigating to EntriesScreen")
                         navController.navigate(Routes.ENTRIES_SCREEN)
                     }
                     is AccountViewModel.NavigationEvent.NavigateToListsScreen -> {
-                        Log.d("AppNavigation", "Navigating to ListsScreen")
                         navController.navigate(Routes.LISTS_SCREEN)
                     }
                     is AccountViewModel.NavigationEvent.NavigateToRacesSearchScreen -> {
                         val racesJson = URLEncoder.encode(gson.toJson(event.races), "UTF-8")
-                        Log.d("AppNavigation", "Navigating to RacesSearchScreen")
                         navController.navigate("${Routes.RACES_SEARCH_SCREEN}/$racesJson")
                     }
                     is AccountViewModel.NavigationEvent.NavigateBack -> {
-                        Log.d("AppNavigation", "Navigating back")
                         navController.popBackStack()
                     }
                 }
@@ -172,20 +143,23 @@ fun AppNavigation(
                     )
 
                     if (isSearchActivated.value) {
-                        BoxForOverlayMenu {
-                            isSearchActivated.value = false
-                        }
-
-                        SearchMenu(
-                            racesViewModel = racesViewModel
-                        ) { racesList ->
-                            isSearchActivated.value = false
-                            if (racesList.size == 1) {
-                                accountViewModel.requestNavigateToRaceScreen(racesList[0])
-                            } else {
-                                accountViewModel.requestNavigateToRacesSearchScreen(racesList)
+                        BoxForOverlayMenu (
+                            onClick = {
+                                isSearchActivated.value = false
+                            },
+                            content =  {
+                                SearchMenu(
+                                    racesViewModel = racesViewModel
+                                ) { racesList ->
+                                    isSearchActivated.value = false
+                                    if (racesList.size == 1) {
+                                        accountViewModel.requestNavigateToRaceScreen(racesList[0])
+                                    } else {
+                                        accountViewModel.requestNavigateToRacesSearchScreen(racesList)
+                                    }
+                                }
                             }
-                        }
+                        )
                     }
                 }
             }

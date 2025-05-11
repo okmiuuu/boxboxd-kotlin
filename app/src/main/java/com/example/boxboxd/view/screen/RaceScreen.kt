@@ -1,6 +1,7 @@
 package com.example.boxboxd.view.screen
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -79,6 +80,16 @@ fun RaceScreen (
     val currentUser = accountViewModel.userObject.collectAsState()
 
     val isRaceAlreadyLogged = remember { mutableStateOf(false) }
+
+    BackHandler(enabled = showConfirmDialog.value || showLoginDialog.value) {
+        showConfirmDialog.value = false
+        showLoginDialog.value = false
+    }
+
+    BackHandler(enabled = isLogRaceMenuOpened.value || isListMenuOpened.value) {
+        if (isListMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+        if (isLogRaceMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+    }
 
     LaunchedEffect(Unit) {
         Log.i("ENTRIES COUNT", accountViewModel.userEntries.value?.size.toString())
@@ -222,71 +233,69 @@ fun RaceScreen (
         }
 
         if (isListMenuOpened.value) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        onClick = { showConfirmDialog.value = true },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = {  },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
-                ChooseListMenu(
-                    racesViewModel = racesViewModel,
-                    accountViewModel = accountViewModel,
-                    isListScreen = false,
-                    race = item,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.6f),
-                    onDismiss = {
-                        isListMenuOpened.value = false
+            BoxForOverlayMenu(
+                onClick = { showConfirmDialog.value = true },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = {  },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
+                        ChooseListMenu(
+                            racesViewModel = racesViewModel,
+                            accountViewModel = accountViewModel,
+                            isListScreen = false,
+                            race = item,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.6f),
+                            onDismiss = {
+                                isListMenuOpened.value = false
+                            }
+                        )
                     }
-                )
-            }
+                }
+            )
         }
 
         if (isLogRaceMenuOpened.value) {
 
-            BoxForOverlayMenu { showConfirmDialog.value = true  }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = {  },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
-                LogRaceMenu(
-                    accountViewModel = accountViewModel,
-                    racesViewModel = racesViewModel,
-                    race = item,
-                    isLogging = isLogging,
-                    onLogSubmitted = {
-                        isLogRaceMenuOpened.value = false
-                        isRaceAlreadyLogged.value = true
+            BoxForOverlayMenu (
+                onClick =  { showConfirmDialog.value = true  },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = {  },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
+                        LogRaceMenu(
+                            accountViewModel = accountViewModel,
+                            racesViewModel = racesViewModel,
+                            race = item,
+                            isLogging = isLogging,
+                            onLogSubmitted = {
+                                isLogRaceMenuOpened.value = false
+                                isRaceAlreadyLogged.value = true
+                            }
+                        )
                     }
-                )
-            }
+                }
+            )
         }
 
         if (showConfirmDialog.value) {
@@ -328,7 +337,7 @@ fun RaceScreen (
                 text = { Text(stringResource(R.string.confirm_dialog)) },
                 dismissButton = {
                     TextButton(
-                        onClick = { showConfirmDialog.value = false }
+                        onClick = { showLoginDialog.value = false }
                     ) {
                         Text (
                             text = stringResource(R.string.no),

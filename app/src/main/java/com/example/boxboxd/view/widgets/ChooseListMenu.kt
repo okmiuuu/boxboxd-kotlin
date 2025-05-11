@@ -144,81 +144,68 @@ fun ChooseListMenu(
         }
 
         if (isCreateListMenuOpened.value) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        onClick = { showConfirmDialog.value = true },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-            )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = {  },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
-                CreateListMenu (
-                    accountViewModel = accountViewModel,
-                    onLogSubmitted = {
-                        isCreateListMenuOpened.value = false
+            BoxForOverlayMenu (
+                onClick = { showConfirmDialog.value = true },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = {  },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
+                        CreateListMenu (
+                            accountViewModel = accountViewModel,
+                            onLogSubmitted = {
+                                isCreateListMenuOpened.value = false
+                            }
+                        )
                     }
-                )
-            }
+                }
+            )
         }
 
         if (isEditListMenuOpened.value) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f))
-                    .clickable(
-                        onClick = { showConfirmDialog.value = true },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-            )
+            BoxForOverlayMenu (
+                onClick = { showConfirmDialog.value = true },
+                content = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable(
+                                onClick = { },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(16.dp)
+                    ) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(
-                        onClick = { },
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    )
-                    .padding(16.dp)
-            ) {
+                        val listToEditConst = listToEdit.value
 
-                val listToEditConst = listToEdit.value
-
-                listToEditConst?.let {
-                    EditListMenu(
-                        listToEdit = listToEditConst,
-                        accountViewModel = accountViewModel,
-                        onLogSubmitted = {
-                            isEditListMenuOpened.value = false
+                        listToEditConst?.let {
+                            EditListMenu(
+                                listToEdit = listToEditConst,
+                                accountViewModel = accountViewModel,
+                                onLogSubmitted = {
+                                    isEditListMenuOpened.value = false
+                                }
+                            )
                         }
-                    )
+                    }
                 }
-            }
+            )
         }
     }
 
     if (showDuplicateDialog.value) {
-        Log.i("showDuplicateDialog inside", showDuplicateDialog.value.toString())
-
         AlertDialog(
             onDismissRequest = { showDuplicateDialog.value = false },
             text = { Text(
