@@ -291,7 +291,7 @@ fun UserScreen (
                             showConfirmExitDialog.value = false
 
                             //leave account
-                            accountViewModel.logOut(context)
+                            accountViewModel.logOut()
                         }
                     ) {
                         Text (

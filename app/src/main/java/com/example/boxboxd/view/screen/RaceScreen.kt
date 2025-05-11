@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.boxboxd.R
+import com.example.boxboxd.core.inner.collectAsStateDelegate
 import com.example.boxboxd.core.jolpica.Driver
 import com.example.boxboxd.core.jolpica.Race
 import com.example.boxboxd.core.inner.objects.CircuitContinentMap
@@ -71,7 +73,10 @@ fun RaceScreen (
     val isLogRaceMenuOpened = remember { mutableStateOf(false) }
     val isListMenuOpened = remember { mutableStateOf(false) }
     val showConfirmDialog = remember { mutableStateOf(false) }
+    val showLoginDialog = remember { mutableStateOf(false) }
     val isLogging = remember { mutableStateOf(false) }
+
+    val currentUser = accountViewModel.userObject.collectAsState()
 
     val isRaceAlreadyLogged = remember { mutableStateOf(false) }
 
@@ -150,7 +155,13 @@ fun RaceScreen (
                     ) {
                         MainButton(
                             buttonText = stringResource(R.string.log_as_watched),
-                            onClick = { isLogRaceMenuOpened.value = true },
+                            onClick = {
+                                if (currentUser.value.id != null) {
+                                    isLogRaceMenuOpened.value = true
+                                } else {
+                                    showLoginDialog.value = true
+                                }
+                            },
                             enabled = !isRaceAlreadyLogged.value && !isLogging.value
                         )
 
@@ -159,7 +170,12 @@ fun RaceScreen (
                                 .height(40.dp)
                                 .padding(horizontal = 10.dp)
                         ){
-                            isListMenuOpened.value = true
+                            if (currentUser.value.id != null) {
+                                isListMenuOpened.value = true
+                            } else {
+                                showLoginDialog.value = true
+                            }
+
                         }
                     }
 
@@ -272,6 +288,7 @@ fun RaceScreen (
                 )
             }
         }
+
         if (showConfirmDialog.value) {
             AlertDialog(
                 onDismissRequest = { showConfirmDialog.value = false },
@@ -302,7 +319,38 @@ fun RaceScreen (
                         )
                     }
                 },
+            )
+        }
 
+        if (showLoginDialog.value) {
+            AlertDialog(
+                onDismissRequest = { showConfirmDialog.value = false },
+                text = { Text(stringResource(R.string.confirm_dialog)) },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showConfirmDialog.value = false }
+                    ) {
+                        Text (
+                            text = stringResource(R.string.no),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showLoginDialog.value = false
+                            accountViewModel.requestNavigateToLoginScreen()
+                        }
+                    ) {
+                        Text (
+                            text = stringResource(R.string.go_to_login),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                },
             )
         }
     }

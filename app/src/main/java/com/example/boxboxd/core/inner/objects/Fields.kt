@@ -26,4 +26,7 @@ object Fields {
     const val NAME = "name"
     const val DESCRIPTION = "description"
     const val PICTURE = "picture"
+
+    //for races
+    const val SEASON = "season"
 }

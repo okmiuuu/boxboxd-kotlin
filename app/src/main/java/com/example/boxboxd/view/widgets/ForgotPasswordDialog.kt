@@ -1,4 +1,4 @@
-package com.example.boxboxd.view.loginScreen
+package com.example.boxboxd.view.widgets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

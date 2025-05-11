@@ -5,11 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.core.rememberTransition
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.room.util.copy
-import com.example.boxboxd.LoginActivity
 import com.example.boxboxd.MainActivity
 import com.example.boxboxd.core.inner.CustomList
 import com.example.boxboxd.core.inner.Entry
@@ -102,6 +102,9 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
         data class NavigateToUserScreen(val user: User) : NavigationEvent()
         data class NavigateToRaceScreen(val race: Race) : NavigationEvent()
         object NavigateToEntriesScreen : NavigationEvent()
+        object NavigateToMainScreen : NavigationEvent()
+        object NavigateToLoginScreen : NavigationEvent()
+        object NavigateToRegistrationScreen : NavigationEvent()
         object NavigateToListsScreen : NavigationEvent()
         data class NavigateToRacesSearchScreen(val races: List<Race?>) : NavigationEvent()
         object NavigateBack : NavigationEvent()
@@ -111,6 +114,24 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
     fun requestNavigateToUserScreen(user: User) {
         viewModelScope.launch {
             _navigationEvents.emit(NavigationEvent.NavigateToUserScreen(user))
+        }
+    }
+
+    fun requestNavigateToMainScreen() {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToMainScreen)
+        }
+    }
+
+    fun requestNavigateToLoginScreen() {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToLoginScreen)
+        }
+    }
+
+    fun requestNavigateToRegistrationScreen() {
+        viewModelScope.launch {
+            _navigationEvents.emit(NavigationEvent.NavigateToRegistrationScreen)
         }
     }
 
@@ -198,6 +219,11 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
                 Log.w("Firestore", "User document does not exist")
             }
         }
+    }
+
+    fun clearUserObject() {
+        _userObject.value = User()
+        Log.d("AccountViewModel", "Cleared userObject")
     }
 
     fun createList(
@@ -437,11 +463,9 @@ class AccountViewModel(private val navController: NavController) : ViewModel() {
 
     }
 
-    fun logOut(context: Context) {
+    fun logOut() {
         auth.signOut()
-        (context as MainActivity).finish()
-        val i = Intent(context, LoginActivity::class.java)
-        context.startActivity(i)
+        requestNavigateToLoginScreen()
     }
 
     fun checkIfThatIsYourPage(user : User) : Boolean {

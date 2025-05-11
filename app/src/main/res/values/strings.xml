@@ -93,6 +93,9 @@
     <string name="leave_dialog">are you sure you want to leave account?</string>
     <string name="server_error">we\'re sorry. can\'t access server right now</string>
     <string name="change_theme">change theme</string>
+    <string name="use_as_guest">use as guest ></string>
+    <string name="login_dialog">to use this feature, please log in first</string>
+    <string name="go_to_login">go to log in</string>
 
     <string name="default_web_client_id">34985048530-adfhifhuhfulkmc45gj.apps.googleusercontent.com</string>
 

@@ -84,8 +84,44 @@ class RacesViewModel(private val repository: RaceRepository
                 _racesThisSeason.value = racesForSeason
             } catch (e: Exception) {
                 _racesThisSeason.value = emptyList()
+
             } finally {
+                if (_racesThisSeason.value.isEmpty()) {
+                    fetchRacesForThisSeasonFromFirestore(seasonYear)
+                }
                 _isLoadingThisSeason.value = false
+            }
+        }
+    }
+
+    fun fetchRacesForThisSeasonFromFirestore(seasonYear: Int) {
+        val query = db.collection(Collections.RACES)
+            .whereEqualTo(Fields.SEASON, seasonYear)
+
+//        if (userId != null) {
+//            query = query.whereEqualTo("userId", userId)
+//        }
+
+        query.addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.e("RacesViewModel", "Error fetching races", e)
+                _racesThisSeason.value = emptyList()
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                Log.i("RacesViewModel", "Snapshot documents: ${snapshot.documents.size}")
+                val races = try {
+                    snapshot.toObjects(Race::class.java)
+                } catch (ex: Exception) {
+                    Log.e("RacesViewModel", "Serialization error", ex)
+                    emptyList()
+                }
+                Log.i("RacesViewModel", "Fetched ${races.size} races")
+                _racesThisSeason.value = races
+            } else {
+                Log.w("RacesViewModel", "Snapshot is null")
+                _racesThisSeason.value = emptyList()
             }
         }
     }
@@ -385,8 +421,6 @@ class RacesViewModel(private val repository: RaceRepository
     }
 
     fun getRaceEntries(race: Race, userId: String? = null) {
-        Log.i("RacesViewModel", "Querying for race: ${race.raceName}, season: ${race.season}, userId: $userId")
-
         val query = db.collection(Collections.ENTRIES)
             .whereEqualTo("race.round", race.round)
             .whereEqualTo("race.season", race.season)
