@@ -38,69 +38,79 @@ class AuthViewModel(private val accountViewModel: AccountViewModel) : ViewModel(
     }
 
     init {
-        // Reset authState when auth state changes to null
         auth.addAuthStateListener { firebaseAuth ->
-            if (firebaseAuth.currentUser == null) {
-                Log.d("AuthViewModel", "FirebaseAuth user is null, resetting authState to Idle")
-                _authState.value = AuthState.Idle
+            Log.d("AuthViewModel", "Auth state changed: email=${firebaseAuth.currentUser?.email}, uid=${firebaseAuth.currentUser?.uid}")
+            viewModelScope.launch {
+                if (firebaseAuth.currentUser == null) {
+                    Log.d("AuthViewModel", "No user signed in, setting Idle state")
+                    _authState.value = AuthState.Idle
+                    accountViewModel.clearUserObject()
+                    accountViewModel.requestNavigateToLoginScreen()
+                } else {
+                    Log.d("AuthViewModel", "User signed in, checking user document")
+                    val userId = firebaseAuth.currentUser?.uid ?: return@launch
+                    checkUserAndProceed(userId, null)
+                    accountViewModel.fetchUserData()
+                    _authState.value = AuthState.Success
+                }
             }
         }
     }
 
     fun signInWithEmail(email: String, password: String, context: Context) {
         isLoading = true
-        Log.d("AuthViewModel", "Attempting email sign-in with email: $email")
+        Log.d("AuthViewModel", "signInWithEmail: Attempting login with email=$email")
         viewModelScope.launch {
             try {
-                val result = auth.signInWithEmailAndPassword(email, password).await()
-                Log.d("AuthViewModel", "Email sign-in successful, user: ${result.user?.uid}")
+                auth.signInWithEmailAndPassword(email, password).await()
                 val userId = auth.currentUser?.uid ?: throw Exception("User ID not found")
+                Log.d("AuthViewModel", "signInWithEmail: Login successful, userId=$userId")
                 checkUserAndProceed(userId, context)
-                _authState.value = AuthState.Success
-                Log.d("AuthViewModel", "Set authState to Success")
                 accountViewModel.fetchUserData()
+                _authState.value = AuthState.Success
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Email sign-in failed: ${e.message}", e)
+                Log.e("AuthViewModel", "signInWithEmail: Failed: ${e.message}", e)
                 _authState.value = AuthState.Error(e.message ?: "Authentication failed")
                 Toast.makeText(context, "Authentication error: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 isLoading = false
+                Log.d("AuthViewModel", "signInWithEmail: Completed, isLoading=$isLoading")
             }
         }
     }
 
     fun createAccount(email: String, password: String, context: Context) {
         isLoading = true
-        Log.d("AuthViewModel", "Attempting to create account with email: $email")
+        Log.d("AuthViewModel", "createAccount: Attempting to create account with email=$email")
         viewModelScope.launch {
             try {
-                val result = auth.createUserWithEmailAndPassword(email, password).await()
-                Log.d("AuthViewModel", "Account creation successful, user: ${result.user?.uid}")
+                auth.createUserWithEmailAndPassword(email, password).await()
                 val userId = auth.currentUser?.uid ?: throw Exception("User ID not found")
+                Log.d("AuthViewModel", "createAccount: Account created, userId=$userId")
                 checkUserAndProceed(userId, context)
-                _authState.value = AuthState.Success
-                Log.d("AuthViewModel", "Set authState to Success")
                 accountViewModel.fetchUserData()
+                _authState.value = AuthState.Success
                 Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Account creation failed: ${e.message}", e)
+                Log.e("AuthViewModel", "createAccount: Failed: ${e.message}", e)
                 _authState.value = AuthState.Error(e.message ?: "Registration failed")
                 Toast.makeText(context, "Registration failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 isLoading = false
+                Log.d("AuthViewModel", "createAccount: Completed, isLoading=$isLoading")
             }
         }
     }
 
     fun resetPassword(email: String, context: Context) {
-        Log.d("AuthViewModel", "Attempting to reset password for email: $email")
+        Log.d("AuthViewModel", "resetPassword: Sending reset email to $email")
         viewModelScope.launch {
             try {
                 auth.sendPasswordResetEmail(email).await()
-                Log.d("AuthViewModel", "Password reset email sent to $email")
+                Log.d("AuthViewModel", "resetPassword: Email sent successfully")
                 Toast.makeText(context, "Password reset email sent to $email", Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Password reset failed: ${e.message}", e)
+                Log.e("AuthViewModel", "resetPassword: Failed: ${e.message}", e)
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
@@ -108,41 +118,64 @@ class AuthViewModel(private val accountViewModel: AccountViewModel) : ViewModel(
 
     fun signInWithGoogle(account: GoogleSignInAccount?, context: Context) {
         isLoading = true
-        Log.d("AuthViewModel", "Attempting Google sign-in")
+        Log.d("AuthViewModel", "signInWithGoogle: Attempting Google sign-in")
         viewModelScope.launch {
             try {
                 val credential = GoogleAuthProvider.getCredential(account?.idToken, null)
-                val result = auth.signInWithCredential(credential).await()
-                Log.d("AuthViewModel", "Google sign-in successful, user: ${result.user?.uid}")
+                auth.signInWithCredential(credential).await()
                 val userId = auth.currentUser?.uid ?: throw Exception("User ID not found")
+                Log.d("AuthViewModel", "signInWithGoogle: Login successful, userId=$userId")
                 checkUserAndProceed(userId, context)
+                // Remove fetchUserData() call here to avoid duplicate
                 _authState.value = AuthState.Success
-                Log.d("AuthViewModel", "Set authState to Success")
-                accountViewModel.fetchUserData()
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Google sign-in failed: ${e.message}", e)
+                Log.e("AuthViewModel", "signInWithGoogle: Failed: ${e.message}", e)
                 _authState.value = AuthState.Error(e.message ?: "Google Sign-In failed")
                 Toast.makeText(context, "Google Sign-In failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 isLoading = false
+                Log.d("AuthViewModel", "signInWithGoogle: Completed, isLoading=$isLoading")
+            }
+        }
+    }
+
+    fun signOut(context: Context) {
+        isLoading = true
+        Log.d("AuthViewModel", "signOut: Signing out")
+        viewModelScope.launch {
+            try {
+                auth.signOut()
+                val gso = getGoogleSignInIntent(context)
+                val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                googleSignInClient.signOut().await()
+                Log.d("AuthViewModel", "signOut: Sign-out successful")
+                _authState.value = AuthState.Idle
+                accountViewModel.clearUserObject()
+                accountViewModel.requestNavigateToLoginScreen()
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "signOut: Failed: ${e.message}", e)
+                Toast.makeText(context, "Sign-out failed: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                isLoading = false
+                Log.d("AuthViewModel", "signOut: Completed, isLoading=$isLoading")
             }
         }
     }
 
     fun handleGoogleSignInError(message: String, context: Context) {
-        Log.e("AuthViewModel", "Google sign-in error: $message")
+        Log.e("AuthViewModel", "handleGoogleSignInError: $message")
         _authState.value = AuthState.Error(message)
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
-    private suspend fun checkUserAndProceed(userId: String, context: Context) {
-        Log.d("AuthViewModel", "Checking user: $userId")
+    private suspend fun checkUserAndProceed(userId: String, context: Context?) {
+        Log.d("AuthViewModel", "checkUserAndProceed: Checking userId=$userId")
         val db = Firebase.firestore
         val userDoc = db.collection("users").document(userId)
         try {
             val document = userDoc.get().await()
             if (!document.exists()) {
-                Log.d("AuthViewModel", "User does not exist, creating new user")
+                Log.d("AuthViewModel", "checkUserAndProceed: Creating new user document")
                 val photoUrl = auth.currentUser?.photoUrl?.toString()?.replace("sz=50", "sz=200")
                 val newUser = User(
                     firstLogin = true,
@@ -152,19 +185,21 @@ class AuthViewModel(private val accountViewModel: AccountViewModel) : ViewModel(
                     username = auth.currentUser?.email?.substringBefore("@")
                 )
                 userDoc.set(newUser).await()
-                Log.d("AuthViewModel", "User created: $userId")
+                Log.d("AuthViewModel", "checkUserAndProceed: User document created for userId=$userId")
             } else {
-                Log.d("AuthViewModel", "User exists: $userId")
+                Log.d("AuthViewModel", "checkUserAndProceed: User document exists for userId=$userId")
             }
         } catch (e: Exception) {
-            Log.e("AuthViewModel", "Error checking user: ${e.message}", e)
-            Toast.makeText(context, "Error checking user: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e("AuthViewModel", "checkUserAndProceed: Failed: ${e.message}", e)
+            context?.let {
+                Toast.makeText(it, "Error checking user: ${e.message}", Toast.LENGTH_LONG).show()
+            }
             throw e
         }
     }
 
     fun getGoogleSignInIntent(context: Context): GoogleSignInOptions {
-        Log.d("AuthViewModel", "Creating Google Sign-In intent")
+        Log.d("AuthViewModel", "getGoogleSignInIntent: Creating Google Sign-In intent")
         return GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(R.string.default_web_client_id))
             .requestEmail()
@@ -172,7 +207,7 @@ class AuthViewModel(private val accountViewModel: AccountViewModel) : ViewModel(
     }
 
     fun resetAuthState() {
-        Log.d("AuthViewModel", "Resetting authState to Idle")
+        Log.d("AuthViewModel", "resetAuthState: Setting authState to Idle")
         _authState.value = AuthState.Idle
     }
 }

@@ -1,7 +1,6 @@
-package com.example.boxboxd.view.screen
+package com.example.boxboxd.view.screens
 
 import android.util.Log
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -84,15 +83,17 @@ fun MainScreen(
             )
         }
 
-        userLists?.forEach { list ->
-            if (!list.listItems.isNullOrEmpty()) {
-                item {
-                    RacesRow(
-                        title = list.name,
-                        raceItems = list.listItems,
-                        racesViewModel = racesViewModel,
-                        accountViewModel = accountViewModel
-                    )
+        if (currentUserState.value != null) {
+            userLists?.forEach { list ->
+                if (!list.listItems.isNullOrEmpty()) {
+                    item {
+                        RacesRow(
+                            title = list.name,
+                            raceItems = list.listItems,
+                            racesViewModel = racesViewModel,
+                            accountViewModel = accountViewModel
+                        )
+                    }
                 }
             }
         }

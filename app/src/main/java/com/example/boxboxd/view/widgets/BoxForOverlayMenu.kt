@@ -24,7 +24,7 @@ fun BoxForOverlayMenu(
     Dialog(
         onDismissRequest = { onClick() },
         properties = DialogProperties(
-            usePlatformDefaultWidth = false // Ensures it takes full width
+            usePlatformDefaultWidth = false 
         )
     ) {
         Box(

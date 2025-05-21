@@ -29,6 +29,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -416,11 +417,29 @@ class RacesViewModel(private val repository: RaceRepository
         return null
     }
 
+    suspend fun calculateTheAvgGradeForRace(race: Race): Float {
+        getRaceEntries(race) // Triggers async update to _raceEntries
+
+        // Wait for the first emission of raceEntries (empty or not)
+        val entries = raceEntries.first()
+
+        var sum = 0f
+        val count = entries.size
+
+        Log.d("countsdfsdfsdfs", count.toString())
+
+        entries.forEach { entry ->
+            sum += entry.rating?.toFloat() ?: 0f
+        }
+
+        return if (count > 0) sum / count else 0f
+    }
+
     fun getDriverAtPositionForRace(position : Int, race : Race) : Driver? {
         return race.Results?.find { it.position == position }?.Driver
     }
 
-    fun getRaceEntries(race: Race, userId: String? = null) {
+    fun getRaceEntries(race: Race) {
         val query = db.collection(Collections.ENTRIES)
             .whereEqualTo("race.round", race.round)
             .whereEqualTo("race.season", race.season)

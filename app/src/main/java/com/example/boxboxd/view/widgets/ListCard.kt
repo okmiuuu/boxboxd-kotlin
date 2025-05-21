@@ -53,7 +53,7 @@ fun ListCard(
     onEditList: (CustomList) -> Unit,
     onClick: () -> Unit
 ) {
-    var isExpanded by remember { mutableStateOf(customList.id?.let { accountViewModel.getListExpandedState(it) } ?: false) }
+    var isExpanded by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showCardMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -87,11 +87,7 @@ fun ListCard(
                     detectTapGestures(
                         onTap = {
                             if (isMainVersion && racesCount > 0) {
-                                val newExpanded = !isExpanded
-                                isExpanded = newExpanded
-                                customList.id?.let { listId ->
-                                    accountViewModel.setListExpandedState(listId, newExpanded)
-                                }
+                                isExpanded = !isExpanded
                             }
                             onClick()
                         },
@@ -278,7 +274,9 @@ fun ListCard(
                             val delRaceValue = raceToDelete.value
 
                             if (delRaceValue != null) {
-
+                                if (customList.listItems?.size == 1) {
+                                    isExpanded = false;
+                                }
 
                                 accountViewModel.deleteRaceFromList(
                                     race = delRaceValue,

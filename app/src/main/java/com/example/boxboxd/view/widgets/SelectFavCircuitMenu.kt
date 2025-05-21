@@ -56,41 +56,23 @@ fun SelectFavCircuitMenu(
             Log.i("all Circuits count", allCircuits.value.size.toString())
         }
 
-        val dropDownOptions = remember { mutableStateOf(listOf<DropdownItem>()) }
-        val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
-        val dropDownExpanded = remember { mutableStateOf(false) }
-
-        fun onDropdownDismissRequest() {
-            dropDownExpanded.value = false
-        }
-
-        fun onValueChanged(value: TextFieldValue) {
-            dropDownExpanded.value = true
-            textFieldValue.value = value
-            dropDownOptions.value = trackItems.value
-                .filter { it.text.contains(value.text, ignoreCase = true) && it.text != value.text }
-                .take(3)
-
-            trackName.value = textFieldValue.value.text
-            track.value = allCircuits.value.find {
-                it?.circuitName == trackName.value
-            }
-        }
-
         Text(
             text = stringResource(R.string.select_fav_track),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(vertical = 5.dp)
         )
 
-        TextFieldWithDropdownAndPicture(
-            modifier = Modifier.fillMaxWidth(),
-            value = textFieldValue.value,
-            setValue = ::onValueChanged,
-            onDismissRequest = ::onDropdownDismissRequest,
-            dropDownExpanded = dropDownExpanded.value,
-            list = dropDownOptions.value,
-            label = stringResource(R.string.circuit_name)
+        WidgetForAutocompleteField(
+            valuesForSearch = trackItems.value,
+            label = stringResource(R.string.circuit_name),
+            onChangeValue = { chosenTrack ->
+                trackName.value = chosenTrack.text
+                track.value = allCircuits.value.find {
+                    it?.circuitName == trackName.value
+                }
+            },
+            valuesLimit = 2,
+            areImagesTinted = true
         )
 
         MainButton(

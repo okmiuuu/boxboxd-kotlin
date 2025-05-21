@@ -24,6 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -81,15 +82,31 @@ fun RaceScreen (
 
     val isRaceAlreadyLogged = remember { mutableStateOf(false) }
 
-    BackHandler(enabled = showConfirmDialog.value || showLoginDialog.value) {
-        showConfirmDialog.value = false
-        showLoginDialog.value = false
+    val avgGrade = remember { mutableFloatStateOf(0f) }
+
+    val raceEntries = racesViewModel.raceEntries.collectAsState()
+
+    val areEntriesLoading = remember { mutableStateOf(true) }
+
+    LaunchedEffect(item) {
+        racesViewModel.getRaceEntries(item)
+
+        areEntriesLoading.value = false
     }
 
-    BackHandler(enabled = isLogRaceMenuOpened.value || isListMenuOpened.value) {
-        if (isListMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
-        if (isLogRaceMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+    LaunchedEffect(raceEntries.value) {
+        avgGrade.floatValue = racesViewModel.calculateTheAvgGradeForRace(item)
     }
+
+//    BackHandler(enabled = showConfirmDialog.value || showLoginDialog.value) {
+//        showConfirmDialog.value = false
+//        showLoginDialog.value = false
+//    }
+//
+//    BackHandler(enabled = isLogRaceMenuOpened.value || isListMenuOpened.value) {
+//        if (isListMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+//        if (isLogRaceMenuOpened.value && !showConfirmDialog.value) showConfirmDialog.value = true
+//    }
 
     LaunchedEffect(Unit) {
         Log.i("ENTRIES COUNT", accountViewModel.userEntries.value?.size.toString())
@@ -201,6 +218,10 @@ fun RaceScreen (
                     text = item.Circuit?.circuitName ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                 )
+                Text(
+                    text = stringResource(R.string.grade) + " - " + avgGrade.floatValue,
+                    style = MaterialTheme.typography.titleMedium,
+                )
                 if (lastWinner.value != null) {
                     Row(
                         modifier = Modifier
@@ -224,11 +245,14 @@ fun RaceScreen (
                     }
                 }
 
-                ReviewColumn(
-                    race = item,
-                    racesViewModel = racesViewModel,
-                    accountViewModel = accountViewModel
-                )
+                if (!areEntriesLoading.value) {
+                    ReviewColumn(
+                        race = item,
+                        racesViewModel = racesViewModel,
+                        accountViewModel = accountViewModel
+                    )
+                }
+
             }
         }
 
@@ -334,7 +358,7 @@ fun RaceScreen (
         if (showLoginDialog.value) {
             AlertDialog(
                 onDismissRequest = { showConfirmDialog.value = false },
-                text = { Text(stringResource(R.string.confirm_dialog)) },
+                text = { Text(stringResource(R.string.login_dialog)) },
                 dismissButton = {
                     TextButton(
                         onClick = { showLoginDialog.value = false }

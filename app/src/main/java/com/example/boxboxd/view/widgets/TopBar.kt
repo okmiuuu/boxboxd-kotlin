@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,15 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -39,12 +33,8 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.boxboxd.R
 import com.example.boxboxd.core.inner.User
+import com.example.boxboxd.ui.theme.White
 import com.example.boxboxd.viewmodel.AccountViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,26 +48,16 @@ fun TopBar(
     var title = stringResource(R.string.app_name).uppercase()
     var fontSize = 28.sp
 
-    // Reactive FirebaseAuth state
-    val currentUserState = rememberFirebaseAuthState()
-    val currentUser = currentUserState.value
+    // Collect userObject and isLoading states
     val userObject = accountViewModel.userObject.collectAsState().value
+    val isLoading = accountViewModel.isLoading.collectAsState().value
     val scope = rememberCoroutineScope()
 
     // Log user state for debugging
-    Log.d("TopBar", "CurrentUser: ${currentUser?.email}, UserObject.id: ${userObject.id}")
-
-    // Update userObject when Firebase user changes
-    LaunchedEffect(currentUser) {
-        if (currentUser != null) {
-            accountViewModel.fetchUserData()
-        } else {
-            accountViewModel.clearUserObject()
-        }
-    }
+    Log.d("TopBar", "Recomposing with UserObject: id=${userObject.id}, username=${userObject.username}, email=${userObject.email}, isLoading=$isLoading")
 
     if (isUserPage) {
-        title = userObject.username ?: ""
+        title = userObject.username ?: "User"
         fontSize = 24.sp
     }
 
@@ -90,6 +70,7 @@ fun TopBar(
                 if (!isMainPage) {
                     IconButton(
                         onClick = {
+                            Log.d("TopBar", "Back button clicked")
                             accountViewModel.requestNavigateBack()
                         }
                     ) {
@@ -103,6 +84,7 @@ fun TopBar(
                 } else {
                     IconButton(
                         onClick = {
+                            Log.d("TopBar", "Search button clicked")
                             onSearchClick()
                         }
                     ) {
@@ -118,26 +100,37 @@ fun TopBar(
                 Text(text = title, style = MaterialTheme.typography.titleMedium, fontSize = fontSize)
                 Spacer(modifier = Modifier.weight(1f))
                 if (isMainPage) {
-                    UserImage(
-                        user = userObject,
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .height(35.dp)
-                            .width(35.dp)
-                            .clickable(onClick = {
-                                scope.launch {
-                                    // Delay to allow fetchUserData to complete
-                                    delay(500)
-                                    if (currentUser != null && userObject.id != null) {
-                                        Log.d("TopBar", "Navigating to UserScreen for user: ${userObject.id}")
-                                        accountViewModel.requestNavigateToUserScreen(userObject)
-                                    } else {
-                                        Log.d("TopBar", "Navigating to LoginScreen (currentUser: ${currentUser?.email}, userObject.id: ${userObject.id})")
-                                        accountViewModel.requestNavigateToLoginScreen()
+                    if (isLoading) {
+                        AsyncImage(
+                            model = R.drawable.user,
+                            contentDescription = "Loading Profile",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .height(35.dp)
+                                .width(35.dp),
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
+                        )
+                    } else {
+                        UserImage(
+                            user = userObject,
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .height(35.dp)
+                                .width(35.dp)
+                                .clickable(onClick = {
+                                    scope.launch {
+                                        if (userObject.id != null) {
+                                            Log.d("TopBar", "Navigating to UserScreen for user: ${userObject.id}")
+                                            accountViewModel.requestNavigateToUserScreen(userObject)
+                                        } else {
+                                            Log.d("TopBar", "Navigating to LoginScreen")
+                                            accountViewModel.requestNavigateToLoginScreen()
+                                        }
                                     }
-                                }
-                            })
-                    )
+                                })
+                        )
+                    }
                 }
             }
         },
@@ -146,24 +139,4 @@ fun TopBar(
             containerColor = MaterialTheme.colorScheme.primary
         )
     )
-}
-
-@Composable
-fun rememberFirebaseAuthState(): State<FirebaseUser?> {
-    val auth = FirebaseAuth.getInstance()
-    val userState = remember { MutableStateFlow(auth.currentUser) }
-
-    DisposableEffect(auth) {
-        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            Log.d("TopBar", "Auth state changed: ${firebaseAuth.currentUser?.email}")
-            userState.value = firebaseAuth.currentUser
-        }
-        auth.addAuthStateListener(listener)
-        onDispose {
-            Log.d("TopBar", "Removing AuthStateListener")
-            auth.removeAuthStateListener(listener)
-        }
-    }
-
-    return userState.collectAsState()
 }

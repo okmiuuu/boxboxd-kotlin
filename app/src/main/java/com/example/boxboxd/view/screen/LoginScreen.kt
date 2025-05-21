@@ -91,6 +91,7 @@ fun LoginScreen(
 
     if (showDialog.value) {
         ForgotPasswordDialog(
+            defaultEmail = username.value,
             onDismiss = { showDialog.value = false },
             onReset = { email ->
                 authViewModel.resetPassword(email, context)

@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.boxboxd.R
@@ -54,6 +54,7 @@ fun LogRaceMenu(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val errorMessage = remember { mutableStateOf<String?>(null) }
+    val userObject = accountViewModel.userObject.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxHeight(0.5f),
@@ -108,18 +109,18 @@ fun LogRaceMenu(
                         val rating = MapObjects.tyreToGrade[selectedTyre.value]
                         val entry = Entry(
                             race = race,
-                            userId = accountViewModel.userId,
+                            userId = userObject.value.id,
                             mood = mood.value,
                             rating = rating,
                             text = comment.value,
                             createdAt = Timestamp.now(),
                             updatedAt = Timestamp.now(),
                             visibility = Visibility.PUBLIC,
-                            user = accountViewModel.userObject.value
+                            user = userObject.value
                         )
                         accountViewModel.logRace(entry)
 
-                        Log.d("LogRaceMenu", "Race logged: ${race.raceName}")
+                        Log.d("LogRaceMenu NEWWW", "Race loggedAAAA: ${race.raceName}")
                     } catch (e: Exception) {
                         errorMessage.value = "Error logging race: ${e.message}"
                         Log.e("LogRaceMenu", "Error logging race", e)
@@ -132,7 +133,7 @@ fun LogRaceMenu(
                     }
                 }
             },
-            enabled = selectedTyre.value != null && mood.value != null && !isLogging.value
+            enabled = selectedTyre.value != null && mood.value != null && userObject.value.id != null && !isLogging.value
         )
 
         errorMessage.value?.let { error ->
@@ -148,7 +149,6 @@ fun LogRaceMenu(
 
 @Composable
 fun GradeSelector(selectedTyre: MutableState<TyresGrades?>) {
-
     val reaction = remember { mutableStateOf<Int?>(null) }
 
     Column(

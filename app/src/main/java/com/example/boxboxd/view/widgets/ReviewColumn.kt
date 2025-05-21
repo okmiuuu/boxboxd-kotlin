@@ -24,8 +24,8 @@ fun ReviewColumn(
 ) {
     val raceEntries = racesViewModel.raceEntries.collectAsState()
 
-    LaunchedEffect(race, accountViewModel.userId) {
-        racesViewModel.getRaceEntries(race, accountViewModel.userId)
+    LaunchedEffect(race) {
+        racesViewModel.getRaceEntries(race)
     }
 
     Text(

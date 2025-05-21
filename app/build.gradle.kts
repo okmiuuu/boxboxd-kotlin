@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
     id("com.google.gms.google-services")
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
 }
@@ -51,6 +52,10 @@ android {
     }
 }
 
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+}
+
 dependencies {
     implementation(libs.ycharts)
     implementation(libs.hilt.android)
@@ -80,6 +85,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.ui.test.android)
     implementation(libs.androidx.foundation.android)
+    implementation(libs.androidx.room.runtime.android)
+    implementation(libs.androidx.animation.core.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

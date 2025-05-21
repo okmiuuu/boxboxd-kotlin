@@ -35,40 +35,24 @@ fun ChooseMoodBox(
 
     moodItems.value = resultList
 
-    val dropDownOptions = remember { mutableStateOf(listOf<DropdownItem>()) }
-    val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
-    val dropDownExpanded = remember { mutableStateOf(false) }
-
-    fun onDropdownDismissRequest() {
-        dropDownExpanded.value = false
-    }
-
     val context = LocalContext.current
 
-    fun onValueChanged(value: TextFieldValue) {
-        dropDownExpanded.value = true
-        textFieldValue.value = value
-        dropDownOptions.value = moodItems.value
-            .filter { it.text.contains(value.text, ignoreCase = true) && it.text != value.text }
 
-        moodName.value = textFieldValue.value.text
-        moodResourceId.value = racesViewModel.getResourceId(
+    WidgetForAutocompleteField(
+        valuesForSearch = moodItems.value,
+        label = stringResource(R.string.mood),
+        onChangeValue = { chosenMood ->
+            moodName.value = chosenMood.text
+            moodResourceId.value = racesViewModel.getResourceId(
                 context = context,
                 name = moodName.value ?: "",
                 resourceType = "string"
-        )
-        mood.value = MapObjects.stringToMood[moodResourceId.value]
-        onMoodChange(mood.value)
-    }
-
-    TextFieldWithDropdownAndPicture(
-        modifier = Modifier.fillMaxWidth(),
-        value = textFieldValue.value,
-        setValue = ::onValueChanged,
-        onDismissRequest = ::onDropdownDismissRequest,
-        dropDownExpanded = dropDownExpanded.value,
-        list = dropDownOptions.value,
-        label = stringResource(R.string.mood)
+            )
+            mood.value = MapObjects.stringToMood[moodResourceId.value]
+            onMoodChange(mood.value)
+        },
+        valuesLimit = 10,
+        areImagesTinted = true
     )
 
 }

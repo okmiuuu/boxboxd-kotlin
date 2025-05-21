@@ -40,40 +40,20 @@ fun SelectFavTeamMenu(
         LaunchedEffect(Unit) {
             teamItems.value = racesViewModel.getListOfTeamItems()
         }
-
-        val dropDownOptions = remember { mutableStateOf(listOf<DropdownItem>()) }
-        val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
-        val dropDownExpanded = remember { mutableStateOf(false) }
-
-        fun onDropdownDismissRequest() {
-            dropDownExpanded.value = false
-        }
-
-        fun onValueChanged(value: TextFieldValue) {
-            dropDownExpanded.value = true
-            textFieldValue.value = value
-            dropDownOptions.value = teamItems.value
-                .filter { it.text.contains(value.text, ignoreCase = true) && it.text != value.text }
-                .take(3)
-
-            teamName.value = textFieldValue.value.text
-            team.value = MapObjects.stringNameToTeam[teamName.value.lowercase()]
-        }
-
         Text(
             text = stringResource(R.string.select_fav_team),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(vertical = 5.dp)
         )
 
-        TextFieldWithDropdownAndPicture(
-            modifier = Modifier.fillMaxWidth(),
-            value = textFieldValue.value,
-            setValue = ::onValueChanged,
-            onDismissRequest = ::onDropdownDismissRequest,
-            dropDownExpanded = dropDownExpanded.value,
-            list = dropDownOptions.value,
-            label = stringResource(R.string.team_name)
+        WidgetForAutocompleteField(
+            valuesForSearch = teamItems.value,
+            label = stringResource(R.string.team_name),
+            onChangeValue = { chosenTeam ->
+                teamName.value = chosenTeam.text
+                team.value = MapObjects.stringNameToTeam[teamName.value.lowercase()]
+            },
+            valuesLimit = 2,
         )
 
         MainButton(

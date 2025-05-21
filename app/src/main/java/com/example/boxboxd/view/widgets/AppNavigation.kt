@@ -27,13 +27,13 @@ import com.example.boxboxd.core.inner.User
 import com.example.boxboxd.core.inner.objects.Routes
 import com.example.boxboxd.core.jolpica.Race
 import com.example.boxboxd.view.screen.ListScreen
-import com.example.boxboxd.view.screen.MainScreen
 import com.example.boxboxd.view.screen.RaceScreen
 import com.example.boxboxd.view.screen.RacesScreen
 import com.example.boxboxd.view.screen.UserEntriesScreen
 import com.example.boxboxd.view.screen.UserScreen
 import com.example.boxboxd.view.screen.LoginScreen
 import com.example.boxboxd.view.screen.RegistrationScreen
+import com.example.boxboxd.view.screens.MainScreen
 import com.example.boxboxd.viewmodel.AccountViewModel
 import com.example.boxboxd.viewmodel.AuthViewModel
 import com.example.boxboxd.viewmodel.RacesViewModel
@@ -126,7 +126,7 @@ fun AppNavigation(
                         accountViewModel = accountViewModel,
                         onSearchClick = {
                             isSearchActivated.value = !isSearchActivated.value
-                        }
+                        },
                     )
                 }
             ) { innerPadding ->
@@ -182,7 +182,7 @@ fun AppNavigation(
         composable(Routes.ENTRIES_SCREEN) {
             Scaffold(
                 topBar = {
-                    TopBar(accountViewModel = accountViewModel)
+                    TopBar(accountViewModel = accountViewModel,)
                 }
             ) { innerPadding ->
                 Column(
@@ -211,7 +211,7 @@ fun AppNavigation(
                     TopBar(
                         isMainPage = false,
                         isUserPage = true,
-                        accountViewModel = accountViewModel
+                        accountViewModel = accountViewModel,
                     )
                 }
             ) { innerPadding ->
@@ -243,7 +243,7 @@ fun AppNavigation(
                 topBar = {
                     TopBar(
                         isMainPage = false,
-                        accountViewModel = accountViewModel
+                        accountViewModel = accountViewModel,
                     )
                 }
             ) { innerPadding ->
@@ -267,7 +267,8 @@ fun AppNavigation(
         composable(Routes.LISTS_SCREEN) {
             Scaffold(
                 topBar = {
-                    TopBar(accountViewModel = accountViewModel)
+                    TopBar(accountViewModel = accountViewModel,
+                        )
                 }
             ) { innerPadding ->
                 Column(
@@ -294,7 +295,8 @@ fun AppNavigation(
             val parsedRaces = decodedRacesJson?.let { gson.fromJson<List<Race>>(it, type) } ?: emptyList()
             Scaffold(
                 topBar = {
-                    TopBar(accountViewModel = accountViewModel)
+                    TopBar(accountViewModel = accountViewModel,
+                        )
                 }
             ) { innerPadding ->
                 Column(

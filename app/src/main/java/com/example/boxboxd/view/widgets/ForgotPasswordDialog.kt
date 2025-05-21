@@ -30,8 +30,8 @@ import com.example.boxboxd.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ForgotPasswordDialog(onDismiss: () -> Unit, onReset: (String) -> Unit) {
-    val email = remember { mutableStateOf("") }
+fun ForgotPasswordDialog(defaultEmail : String, onDismiss: () -> Unit, onReset: (String) -> Unit) {
+    val email = remember { mutableStateOf(defaultEmail) }
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -44,7 +44,7 @@ fun ForgotPasswordDialog(onDismiss: () -> Unit, onReset: (String) -> Unit) {
                 Text(
                     text = stringResource(id = R.string.forgot_password_title),
                     color = MaterialTheme.colorScheme.tertiary,
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.titleMedium
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -76,15 +76,15 @@ fun ForgotPasswordDialog(onDismiss: () -> Unit, onReset: (String) -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.tertiary)
+                        Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall)
                     }
                     Button(
                         onClick = { onReset(email.value) },
-                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary),
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary ),
                         shape = RoundedCornerShape(30.dp),
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Text(stringResource(id = R.string.reset), color = MaterialTheme.colorScheme.tertiary)
+                        Text(stringResource(id = R.string.reset), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }

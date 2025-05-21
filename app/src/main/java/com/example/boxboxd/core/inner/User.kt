@@ -10,7 +10,7 @@ import com.example.boxboxd.core.jolpica.Race
 import com.google.firebase.Timestamp
 
 
-class User(
+data class User(
     val firstLogin : Boolean? = null,
     val id : String? = null,
     val username : String? = null,

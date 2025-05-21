@@ -53,7 +53,7 @@ fun RegistrationScreen(
         Text(
             text = stringResource(id = R.string.registration_title),
             color = MaterialTheme.colorScheme.tertiary,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
 
@@ -137,7 +137,8 @@ fun RegistrationScreen(
         ) {
             Text(
                 text = stringResource(id = R.string.registration_return_to_main),
-                color = MaterialTheme.colorScheme.secondary
+                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

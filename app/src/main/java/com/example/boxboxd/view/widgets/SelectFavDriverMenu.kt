@@ -17,7 +17,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.boxboxd.R
+import com.example.boxboxd.core.inner.objects.MapObjects
 import com.example.boxboxd.core.jolpica.Driver
+import com.example.boxboxd.model.DropdownItem
 import com.example.boxboxd.ui.DriverCard
 import com.example.boxboxd.viewmodel.AccountViewModel
 import com.example.boxboxd.viewmodel.RacesViewModel
@@ -37,8 +39,18 @@ fun SelectFavDriverMenu(
     val saveError = remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
+    val driverItems = remember { mutableStateListOf<DropdownItem>() }
+
     LaunchedEffect(Unit) {
         driverNames.value = racesViewModel.getListOfDriverNames()
+        Log.i("MENU driverNames", driverNames.value.size.toString())
+
+        // Clear and repopulate driverItems
+        driverItems.clear()
+        driverNames.value.forEach {
+            driverItems.add(DropdownItem(it, null))
+        }
+        Log.i("MENU driverItems", driverItems.size.toString())
     }
 
     LaunchedEffect(driverName.value) {
@@ -51,23 +63,6 @@ fun SelectFavDriverMenu(
         }
     }
 
-    val dropDownOptions = remember { mutableStateOf(listOf<String>()) }
-    val textFieldValue = remember { mutableStateOf(TextFieldValue()) }
-    val dropDownExpanded = remember { mutableStateOf(false) }
-
-    fun onDropdownDismissRequest() {
-        dropDownExpanded.value = false
-    }
-
-    fun onValueChanged(value: TextFieldValue) {
-        dropDownExpanded.value = true
-        textFieldValue.value = value
-        dropDownOptions.value = driverNames.value
-            .filter { it.contains(value.text, ignoreCase = true) && it != value.text }
-            .take(3)
-        driverName.value = textFieldValue.value.text
-    }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
@@ -78,14 +73,13 @@ fun SelectFavDriverMenu(
             modifier = Modifier.padding(vertical = 5.dp)
         )
 
-        TextFieldWithDropdown(
-            modifier = Modifier.fillMaxWidth(),
-            value = textFieldValue.value,
-            setValue = ::onValueChanged,
-            onDismissRequest = ::onDropdownDismissRequest,
-            dropDownExpanded = dropDownExpanded.value,
-            list = dropDownOptions.value,
-            label = stringResource(R.string.driver_name)
+        WidgetForAutocompleteField(
+            valuesForSearch = driverItems,
+            label = stringResource(R.string.driver_name),
+            onChangeValue = { chosenDriver ->
+                driverName.value = chosenDriver.text
+            },
+            valuesLimit = 2,
         )
 
         if (isLoading.value) {
@@ -109,7 +103,7 @@ fun SelectFavDriverMenu(
                             val success = accountViewModel.setFavoriteDriver(selectedDriver)
                             isSaving.value = false
                             if (success) {
-                                onLogSubmitted(driver.value) // Navigate or complete flow
+                                onLogSubmitted(driver.value)
                             } else {
                                 saveError.value = "Failed to save favorite driver"
                             }

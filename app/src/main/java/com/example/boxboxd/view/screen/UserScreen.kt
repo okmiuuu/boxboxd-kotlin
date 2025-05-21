@@ -127,13 +127,13 @@ fun UserScreen (
                     )
                 }
 
-                if (!isThatActiveUserPage) {
-                    FollowButton (
-                        onClick = {
-                            accountViewModel.followUser(user)
-                        }
-                    )
-                }
+//                if (!isThatActiveUserPage) {
+//                    FollowButton (
+//                        onClick = {
+//                            accountViewModel.followUser(user)
+//                        }
+//                    )
+//                }
 
                 GradeStatsTable(gradeToCountMapForUser)
 

@@ -1,5 +1,6 @@
 package com.example.boxboxd.view.widgets
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -17,15 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import coil.compose.rememberAsyncImagePainter
+import com.example.boxboxd.R
 import com.example.boxboxd.model.DropdownItem
+import com.example.boxboxd.model.TintedPainter
 
 @Composable
-fun TextFieldWithDropdownAndPicture(
+fun AutocompleteTextField(
     modifier: Modifier = Modifier,
     value: TextFieldValue,
     setValue: (TextFieldValue) -> Unit,
@@ -33,7 +38,10 @@ fun TextFieldWithDropdownAndPicture(
     dropDownExpanded: Boolean,
     list: List<DropdownItem>,
     label : String,
+    onFocused: () -> Unit,
+    areImagesTinted : Boolean = false,
 ) {
+
     Box(modifier) {
         TextField(
             modifier = Modifier
@@ -42,7 +50,7 @@ fun TextFieldWithDropdownAndPicture(
                     if (!focusState.isFocused) {
                         onDismissRequest()
                     } else {
-
+                        onFocused()
                     }
                 },
             value = value,
@@ -60,7 +68,7 @@ fun TextFieldWithDropdownAndPicture(
                 dismissOnClickOutside = true
             ),
             onDismissRequest = onDismissRequest,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             list.forEach { item ->
                 DropdownMenuItem(
@@ -71,12 +79,20 @@ fun TextFieldWithDropdownAndPicture(
                         ) {
                             item.imageUrl?.let { url ->
                                 Image(
-                                    painter = rememberAsyncImagePainter(url),
+                                    painter =
+                                        if (areImagesTinted) {
+                                            TintedPainter(
+                                                painter = rememberAsyncImagePainter(url),
+                                                tint = MaterialTheme.colorScheme.tertiary
+                                            )
+                                        } else {
+                                            rememberAsyncImagePainter(url)
+                                        }
+                                    ,
                                     contentDescription = "${item.text} image",
                                     modifier = Modifier
                                         .size(40.dp)
                                         .padding(end = 8.dp),
-                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.tertiary)
                                 )
                             } ?: Spacer(modifier = Modifier.size(40.dp))
                             Text(
